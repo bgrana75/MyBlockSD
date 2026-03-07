@@ -1,8 +1,10 @@
 # My Block SD
 
-**Hyper-local neighborhood intelligence for San Diego.** Enter any address and instantly see 311 service requests, development permits, live police dispatch, and ask an AI assistant about your area — all in one place.
+**Hyper-local neighborhood intelligence for San Diego.** Enter any address and instantly get a comprehensive briefing — 311 service requests, development permits, traffic collisions, street sweeping schedules, fire/EMS incidents, live police dispatch, council district info, nearby civic facilities, and an AI assistant that can answer questions about your area.
 
-Built for the Claude AI Hackathon San Diego, March 2026.
+Built for the **Claude AI Hackathon San Diego**, March 2026.
+
+**Team:** Bryan Grana
 
 ## Live Deployment
 
@@ -13,79 +15,110 @@ Built for the Claude AI Hackathon San Diego, March 2026.
 | **MCP Server** | `https://api.myblocksd.xyz/mcp` (Streamable HTTP) |
 | **Health Check** | [https://api.myblocksd.xyz/healthz](https://api.myblocksd.xyz/healthz) |
 
+## Problem Statement
+
+San Diego publishes a wealth of open data — 311 service requests, development permits, traffic collisions, fire/EMS incidents, street sweeping, council budgets, and more — but it's scattered across dozens of CSV files, GeoJSON endpoints, and web portals. No single tool lets a resident type in their address and see everything that matters for their block.
+
+**My Block SD** solves this by ingesting 11 city data sources into a single backend, exposing them through both a polished web dashboard and an MCP server that any AI agent can query.
+
 ## What It Does
 
-- **Briefing** — View open 311 (Get It Done) service requests near any address: top issue categories, average response times, and a sortable list of recent reports. Includes a direct link to report new issues.
-- **Live** — Real-time SDPD dispatch calls filtered by neighborhood, auto-refreshing every 60 seconds.
-- **Ask AI** — Chat with a Claude-powered assistant that has access to all local data via MCP tools. Ask questions like "What are the biggest issues on my block?" or "How does this area compare?"
-- **Map** — Interactive Leaflet map with color-coded markers for 311 items and permits, centered on your searched address.
+- **Neighborhood Briefing** — Stats ribbon showing 311 reports, permits, traffic collisions, and fire/EMS calls at a glance. Detailed sections for council district, nearby services, street sweeping schedule, collision breakdown, and recent reports.
+- **Interactive Map** — Leaflet map with color-coded markers for 311 items, permits, libraries, fire stations, and rec centers.
+- **Live SDPD Dispatch** — Real-time police dispatch calls filtered by neighborhood, auto-refreshing every 60 seconds.
+- **AI Chat** — Floating chat modal powered by Claude with MCP tool access to all 11 datasets. Ask questions like "What are the biggest issues on my block?" or "How does this area compare to Hillcrest?"
 
-## Data Sources
+## Data Sources (11 datasets)
 
-| Source | Type | Update Frequency |
-|--------|------|-----------------|
-| [City of San Diego Open Data — Get It Done 311](https://data.sandiego.gov/) | Open requests CSV (~32MB) | Daily |
-| [City of San Diego Open Data — Development Permits](https://data.sandiego.gov/) | Active permits CSV | Daily |
-| [SDPD Dispatch Online](https://webapps.sandiego.gov/sdpdonline/) | Live police dispatch | Polled every 5 min |
+| # | Source | Dataset | Records | Update |
+|---|--------|---------|---------|--------|
+| 1 | City of San Diego Open Data | **311 / Get It Done** — open service requests (potholes, graffiti, encampments, etc.) | ~68,000 | Daily |
+| 2 | City of San Diego Open Data | **Development Permits** — building, solar, electrical, plumbing permits since 2024 | ~92,000 | Daily |
+| 3 | City of San Diego Open Data | **Traffic Collisions** — police-reported collisions with injury/fatality/hit-run data (last 2 years) | ~15,000 | Daily |
+| 4 | City of San Diego Open Data | **Fire/EMS Incidents** — fire and emergency medical responses by zip code (current year) | ~33,000 | Daily |
+| 5 | City of San Diego Open Data | **Street Sweeping Schedules** — sweeping routes, schedules, posted/voluntary status per block | ~28,000 segments | Static |
+| 6 | City of San Diego Open Data | **Council District Boundaries** — GeoJSON boundaries for all 9 districts + council member names | 9 districts | Static |
+| 7 | City of San Diego Open Data | **Council District Budgets** — operating budget by district and fiscal year | 9 budgets | Annual |
+| 8 | City of San Diego Open Data | **Libraries** — all public library locations with addresses and phone numbers | 37 | Static |
+| 9 | City of San Diego Open Data | **Fire Stations** — all fire station locations with type and contact info | 88 | Static |
+| 10 | City of San Diego Open Data | **Recreation Centers** — park rec centers with amenity info (gymnasium, etc.) | 64 | Static |
+| 11 | SDPD Online | **Live Police Dispatch** — active calls for service scraped from SDPD web portal | Real-time | Every 5 min |
+
+All City of San Diego data is sourced from [data.sandiego.gov](https://data.sandiego.gov) / [seshat.datasd.org](https://seshat.datasd.org). SDPD dispatch is scraped from the public [SDPD Online](https://webapps.sandiego.gov/sdpdonline/) portal.
 
 ## Architecture
 
 ```
-┌────────────────────┐         ┌──────────────────────────┐
-│   Next.js Frontend │  HTTPS  │   Express Backend        │
-│   (Vercel)         │ ──────► │   (Docker on server)     │
-│                    │         │                          │
-│  • Address search  │         │  • /api/briefing (POST)  │
-│  • Map (Leaflet)   │         │  • /api/live (GET)       │
-│  • Briefing tab    │         │  • /api/chat (POST, SSE) │
-│  • Live tab        │         │  • /mcp (MCP endpoint)   │
-│  • Ask AI tab      │         │  • /healthz              │
-│                    │         │                          │
-│                    │         │  Services:               │
-│                    │         │  • 311 data (CSV stream)  │
-│                    │         │  • Permits (CSV stream)   │
-│                    │         │  • SDPD (HTML scrape)     │
-│                    │         │  • Geocoder (Nominatim)   │
-│                    │         │  • Claude Agent (MCP)     │
-└────────────────────┘         └──────────────────────────┘
+┌─────────────────────────┐         ┌──────────────────────────────────┐
+│   Next.js Frontend      │  HTTPS  │   Express Backend                │
+│   (Vercel)              │ ──────► │   (Docker on dedicated server)   │
+│                         │         │                                  │
+│  • Address search       │         │  REST API:                       │
+│  • Interactive map      │         │  • POST /api/briefing            │
+│  • Briefing dashboard   │         │  • POST /api/live                │
+│  • Live SDPD card       │         │  • POST /api/chat (SSE)          │
+│  • Floating AI chat     │         │  • GET  /healthz, /readyz        │
+│                         │         │                                  │
+│                         │         │  MCP Server (Streamable HTTP):   │
+│                         │         │  • POST /mcp (10 tools)          │
+│                         │         │                                  │
+│                         │         │  11 Data Services:               │
+│                         │         │  • 311, Permits, Collisions      │
+│                         │         │  • Fire/EMS, Sweeping, SDPD      │
+│                         │         │  • Council Districts + Budgets   │
+│                         │         │  • Libraries, Fire Stations,     │
+│                         │         │    Rec Centers                   │
+│                         │         │  • Geocoder (Nominatim)          │
+│                         │         │  • Claude Agent (tool_use loop)  │
+└─────────────────────────┘         └──────────────────────────────────┘
 ```
 
-- **Frontend**: Next.js 16 with TypeScript, Tailwind CSS, Leaflet/react-leaflet
-- **Backend**: Express.js with TypeScript, tsup build, MCP SDK (Streamable HTTP), Anthropic SDK
-- **AI**: Claude claude-sonnet-4-20250514 with tool_use loop — resolves locations, queries 311/permits/SDPD data via MCP tools
-- **Deployment**: Frontend on Vercel (`myblocksd.xyz`), backend in Docker on dedicated server (`api.myblocksd.xyz`)
+### Tech Stack
+
+- **Frontend**: Next.js 16, TypeScript, Tailwind CSS v4, Leaflet / react-leaflet
+- **Backend**: Express.js 4, TypeScript, tsup build, ESM
+- **MCP**: `@modelcontextprotocol/sdk` — Streamable HTTP, stateless mode, 10 tools
+- **AI**: Anthropic SDK — Claude claude-sonnet-4-20250514 with tool_use loop calling MCP tools
+- **Deployment**: Frontend on Vercel (auto-deploy from GitHub), backend in Docker (node:20-alpine) on dedicated server
+- **Data ingestion**: CSV streaming via `csv-parse`, GeoJSON point-in-polygon via `@turf/boolean-point-in-polygon`, HTML scraping via `cheerio`
 
 ## Project Structure
 
 ```
-apps/web/                    # Next.js frontend
+apps/web/                        # Next.js frontend
   src/
-    app/page.tsx             # Main page layout
+    app/page.tsx                 # Dashboard layout, stats ribbon, floating AI chat
     components/
-      AddressSearch.tsx      # Address input + search
-      Map.tsx                # Leaflet map (dynamic import, no SSR)
-      BriefingTab.tsx        # 311 stats, permits, recent items
-      RightNowTab.tsx        # Live SDPD dispatch
-      ChatPanel.tsx          # AI chat (inline tab)
-    lib/api.ts               # API client (fetch wrapper)
+      AddressSearch.tsx          # Address input with autocomplete
+      Map.tsx                    # Leaflet map (dynamic, no SSR)
+      BriefingTab.tsx            # Neighborhood overview (311, permits, collisions, sweeping, fire, civic)
+      RightNowTab.tsx            # Live SDPD dispatch card
+      ChatPanel.tsx              # AI chat panel (used in floating modal)
+    lib/api.ts                   # API client (fetch wrapper + SSE streaming)
 
-services/myblock-server/     # Express backend
+services/myblock-server/         # Express backend
   src/
-    index.ts                 # Entry point, routes, data init
+    index.ts                     # Entry point, data init sequence, route wiring
     services/
-      data311.ts             # 311 CSV download + haversine query
-      permits.ts             # Permits CSV download + query
-      sdpdDispatch.ts        # SDPD HTML scrape + cache
-      geocoder.ts            # Nominatim geocoding + cache
-      neighborhoodMap.ts     # SDPD ↔ 311 neighborhood mapping
-      agent.ts               # Claude agent with MCP tools
+      data311.ts                 # 311 CSV download + haversine spatial query
+      permits.ts                 # Permits CSV download + spatial query
+      trafficCollisions.ts       # Collision CSV, index by police beat, query by street
+      fireIncidents.ts           # Fire/EMS CSV, index by zip code
+      streetSweeping.ts          # Sweeping CSV, street name normalization, address range lookup
+      councilDistricts.ts        # GeoJSON point-in-polygon district lookup
+      councilBudget.ts           # Operating budget by district
+      civicPoints.ts             # Libraries, fire stations, rec centers (nearest-N queries)
+      sdpdDispatch.ts            # SDPD HTML scrape + 5-min cache
+      geocoder.ts                # Nominatim geocoding + LRU cache
+      neighborhoodMap.ts         # SDPD ↔ standard neighborhood name mapping
+      agent.ts                   # Claude agent with MCP tool_use loop
     routes/
-      briefing.ts            # POST /api/briefing
-      live.ts                # GET /api/live
-      chat.ts                # POST /api/chat (SSE streaming)
-      health.ts              # GET /healthz
-    mcp/server.ts            # MCP server (Streamable HTTP)
-  Dockerfile                 # Multi-stage node:20-alpine
+      briefing.ts                # POST /api/briefing — full neighborhood briefing
+      live.ts                    # POST /api/live — SDPD dispatch
+      chat.ts                    # POST /api/chat — AI chat (SSE streaming)
+      health.ts                  # GET /healthz, /readyz, /api/status
+    mcp/server.ts                # MCP server — 10 tools, stateless Streamable HTTP
+  Dockerfile                     # Multi-stage node:20-alpine build
   docker-compose.yml
 ```
 
@@ -127,11 +160,9 @@ Connect the GitHub repo to Vercel, set root directory to `apps/web`, and add `NE
 
 ## MCP Integration
 
-The backend exposes an MCP endpoint at `https://api.myblocksd.xyz/mcp` using Streamable HTTP transport.
+The backend exposes an MCP endpoint at `https://api.myblocksd.xyz/mcp` using Streamable HTTP transport. Any MCP-compatible client (Claude Desktop, Cline, custom agents) can connect and use all 10 tools.
 
 ### Connecting from Claude Desktop / MCP Clients
-
-Add to your MCP client configuration:
 
 ```json
 {
@@ -143,15 +174,25 @@ Add to your MCP client configuration:
 }
 ```
 
-### Available MCP Tools
+Or via CLI:
+```bash
+claude mcp add myblock --transport http https://api.myblocksd.xyz/mcp
+```
+
+### Available MCP Tools (10)
 
 | Tool | Description | Key Parameters |
 |------|-------------|----------------|
-| `myblock.resolve_location` | Geocode an address to lat/lng + neighborhood | `address` (string) |
-| `myblock.get_311` | Query 311 service requests near a location | `lat`, `lng`, `radiusMiles` (default 0.5), `daysBack` |
-| `myblock.get_permits` | Query development permits near a location | `lat`, `lng`, `radiusMiles`, `daysBack` |
-| `myblock.get_live_sdpd` | Get live SDPD dispatch by neighborhood | `neighborhood` (string, uppercase e.g. "NORTH PARK") |
-| `myblock.get_briefing` | Full briefing combining 311 + permits + SDPD | `address`, `radiusMiles`, `daysBack` |
+| `myblock.resolve_location` | Geocode an address to lat/lng + neighborhood + council district | `address` |
+| `myblock.get_311` | 311 service requests near a location with stats | `lat`, `lng`, `radiusMiles`, `daysBack` |
+| `myblock.get_permits` | Development permits near a location with stats | `lat`, `lng`, `radiusMiles`, `daysBack` |
+| `myblock.get_live_sdpd` | Live SDPD police dispatch by neighborhood | `neighborhood` (uppercase, e.g. "NORTH PARK") |
+| `myblock.get_briefing` | Full briefing: 311 + permits + SDPD + collisions + sweeping + civic + fire/EMS | `address`, `radiusMiles`, `daysBack` |
+| `myblock.get_council_district` | Council district + representative for a location | `lat`, `lng` |
+| `myblock.get_nearby_civic` | Nearest libraries, fire stations, and rec centers | `lat`, `lng`, `count` |
+| `myblock.get_fire_incidents` | Fire/EMS incident stats by zip code (YTD) | `zip` |
+| `myblock.get_traffic_collisions` | Traffic collision stats for a street (2-year window) | `streetName` |
+| `myblock.get_street_sweeping` | Street sweeping schedule for a specific address | `addressNumber`, `streetName` |
 
 ## REST API
 
@@ -159,19 +200,13 @@ Base URL: `https://api.myblocksd.xyz`
 
 ### POST `/api/briefing`
 
-Get 311 service requests, permits, and stats near an address.
+Get a full neighborhood briefing for an address — 311 data, permits, collisions, sweeping, fire/EMS, council info, and nearby civic facilities.
 
 ```bash
 curl -X POST https://api.myblocksd.xyz/api/briefing \
   -H 'Content-Type: application/json' \
   -d '{"address": "1600 Pacific Hwy, San Diego", "radiusMiles": 0.5}'
 ```
-
-**Parameters:**
-- `address` (string, required) — street address to search
-- `radiusMiles` (number, 0.1–5, default 0.5) — search radius
-- `daysBack` (number, optional) — limit to last N days
-- `lat`, `lng` (number, optional) — override geocoding with direct coordinates
 
 ### POST `/api/live`
 
@@ -200,13 +235,9 @@ curl -X POST https://api.myblocksd.xyz/api/chat \
 
 Check data readiness, record counts, and refresh timestamps.
 
-### GET `/healthz`
+### GET `/healthz` / GET `/readyz`
 
-Simple health check — returns `{"status": "ok"}`.
-
-### GET `/readyz`
-
-Readiness probe — returns 200 `{"status": "ready"}` or 503 `{"status": "loading"}`.
+Health and readiness probes.
 
 ## Safety
 
