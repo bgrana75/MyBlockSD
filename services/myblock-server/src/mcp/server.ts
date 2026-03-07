@@ -8,9 +8,11 @@ import { queryPermitsByRadius, computePermitStats } from '../services/permits.js
 import { getByNeighborhood } from '../services/sdpdDispatch.js';
 import { resolveToSdpd } from '../services/neighborhoodMap.js';
 import { lookupDistrict } from '../services/councilDistricts.js';
-import { nearestLibraries, nearestFireStations } from '../services/civicPoints.js';
+import { nearestLibraries, nearestFireStations, nearestRecCenters } from '../services/civicPoints.js';
 import { queryFireIncidentsByZip } from '../services/fireIncidents.js';
 import { getDistrictBudget } from '../services/councilBudget.js';
+import { queryCollisionsByStreet } from '../services/trafficCollisions.js';
+import { lookupSweeping } from '../services/streetSweeping.js';
 
 function createMcpServer() {
   const server = new McpServer({
@@ -128,7 +130,12 @@ function createMcpServer() {
       const budget = councilDistrict ? getDistrictBudget(councilDistrict.district) : null;
       const libs = nearestLibraries(geo.lat, geo.lng, 3);
       const stations = nearestFireStations(geo.lat, geo.lng, 3);
+      const recs = nearestRecCenters(geo.lat, geo.lng, 3);
       const fireIncidents = geo.zip ? queryFireIncidentsByZip(geo.zip) : null;
+      const collisions = geo.road ? queryCollisionsByStreet(geo.road) : null;
+      const sweeping = (geo.houseNumber && geo.road)
+        ? lookupSweeping(parseInt(geo.houseNumber), geo.road)
+        : null;
 
       return {
         content: [{
@@ -148,8 +155,10 @@ function createMcpServer() {
             getItDone311: { items: items311.slice(0, 50), stats: stats311, totalItems: items311.length },
             permits: { items: permitItems.slice(0, 50), stats: permitStats, totalItems: permitItems.length },
             sdpd,
-            civic: { libraries: libs, fireStations: stations },
+            civic: { libraries: libs, fireStations: stations, recCenters: recs },
             fireIncidents: fireIncidents || undefined,
+            trafficCollisions: collisions || undefined,
+            streetSweeping: sweeping || undefined,
           }),
         }],
       };
@@ -187,10 +196,11 @@ function createMcpServer() {
     async ({ lat, lng, count }) => {
       const libs = nearestLibraries(lat, lng, count);
       const stations = nearestFireStations(lat, lng, count);
+      const recs = nearestRecCenters(lat, lng, count);
       return {
         content: [{
           type: 'text' as const,
-          text: JSON.stringify({ libraries: libs, fireStations: stations }),
+          text: JSON.stringify({ libraries: libs, fireStations: stations, recCenters: recs }),
         }],
       };
     }
@@ -205,6 +215,43 @@ function createMcpServer() {
     },
     async ({ zip }) => {
       const result = queryFireIncidentsByZip(zip);
+      return {
+        content: [{
+          type: 'text' as const,
+          text: JSON.stringify(result),
+        }],
+      };
+    }
+  );
+
+  // Tool 9: get_traffic_collisions
+  server.tool(
+    'myblock.get_traffic_collisions',
+    'Get traffic collision statistics for a street in San Diego. Data from last 2 years.',
+    {
+      streetName: z.string().describe('Street name (e.g., "Robinson Ave", "University Ave")'),
+    },
+    async ({ streetName }) => {
+      const result = queryCollisionsByStreet(streetName);
+      return {
+        content: [{
+          type: 'text' as const,
+          text: JSON.stringify(result),
+        }],
+      };
+    }
+  );
+
+  // Tool 10: get_street_sweeping
+  server.tool(
+    'myblock.get_street_sweeping',
+    'Look up street sweeping schedule for an address in San Diego.',
+    {
+      addressNumber: z.number().describe('House number (e.g., 1453)'),
+      streetName: z.string().describe('Street name (e.g., "Robinson Ave")'),
+    },
+    async ({ addressNumber, streetName }) => {
+      const result = lookupSweeping(addressNumber, streetName);
       return {
         content: [{
           type: 'text' as const,

@@ -8,6 +8,7 @@ import { Readable } from 'stream';
 
 const LIBRARIES_URL = 'https://seshat.datasd.org/gis_library_locations/libraries_datasd.csv';
 const FIRE_STATIONS_URL = 'https://seshat.datasd.org/gis_fire_stations/fire_stations_datasd.csv';
+const REC_CENTERS_URL = 'https://seshat.datasd.org/gis_recreation_center/rec_centers_datasd.csv';
 
 export interface Library {
   name: string;
@@ -26,8 +27,20 @@ export interface FireStation {
   lng: number;
 }
 
+export interface RecCenter {
+  name: string;
+  parkName: string;
+  address: string;
+  zip: string;
+  neighborhood: string;
+  hasGymnasium: boolean;
+  lat: number;
+  lng: number;
+}
+
 let libraries: Library[] = [];
 let fireStations: FireStation[] = [];
+let recCenters: RecCenter[] = [];
 
 function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 3959;
@@ -62,6 +75,7 @@ export async function initCivicPoints(): Promise<void> {
   const results = await Promise.allSettled([
     downloadCsv(LIBRARIES_URL),
     downloadCsv(FIRE_STATIONS_URL),
+    downloadCsv(REC_CENTERS_URL),
   ]);
 
   if (results[0].status === 'fulfilled') {
@@ -94,6 +108,24 @@ export async function initCivicPoints(): Promise<void> {
   } else {
     console.error('[civic] Fire stations download failed:', results[1].reason);
   }
+
+  if (results[2].status === 'fulfilled') {
+    recCenters = results[2].value
+      .filter(r => parseFloat(r.lat) && parseFloat(r.lng))
+      .map(r => ({
+        name: r.rec_bldg || '',
+        parkName: r.park_name || '',
+        address: r.address || '',
+        zip: r.zip || '',
+        neighborhood: r.neighborhd || '',
+        hasGymnasium: r.gymnasium === '1',
+        lat: parseFloat(r.lat),
+        lng: parseFloat(r.lng),
+      }));
+    console.log(`[civic] Loaded ${recCenters.length} recreation centers`);
+  } else {
+    console.error('[civic] Recreation centers download failed:', results[2].reason);
+  }
 }
 
 export interface NearbyResult<T> {
@@ -111,6 +143,13 @@ export function nearestLibraries(lat: number, lng: number, n: number = 3): Nearb
 export function nearestFireStations(lat: number, lng: number, n: number = 3): NearbyResult<FireStation>[] {
   return fireStations
     .map(fs => ({ item: fs, distanceMiles: Math.round(haversineDistance(lat, lng, fs.lat, fs.lng) * 100) / 100 }))
+    .sort((a, b) => a.distanceMiles - b.distanceMiles)
+    .slice(0, n);
+}
+
+export function nearestRecCenters(lat: number, lng: number, n: number = 3): NearbyResult<RecCenter>[] {
+  return recCenters
+    .map(rc => ({ item: rc, distanceMiles: Math.round(haversineDistance(lat, lng, rc.lat, rc.lng) * 100) / 100 }))
     .sort((a, b) => a.distanceMiles - b.distanceMiles)
     .slice(0, n);
 }

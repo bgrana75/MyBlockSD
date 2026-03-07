@@ -11,6 +11,8 @@ import { initCouncilDistricts } from './services/councilDistricts.js';
 import { initCivicPoints } from './services/civicPoints.js';
 import { initFireIncidents } from './services/fireIncidents.js';
 import { initCouncilBudget } from './services/councilBudget.js';
+import { initTrafficCollisions } from './services/trafficCollisions.js';
+import { initStreetSweeping } from './services/streetSweeping.js';
 import { setupMcp } from './mcp/server.js';
 
 const app = express();
@@ -53,6 +55,8 @@ async function start() {
   await initCivicPoints();
   await initFireIncidents();
   await initCouncilBudget();
+  await initTrafficCollisions();
+  await initStreetSweeping();
   initSdpdCache();
 
   setDataReady(true);

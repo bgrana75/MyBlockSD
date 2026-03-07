@@ -44,11 +44,27 @@ interface Props {
   civic: {
     libraries: { item: { name: string; address: string; phone: string; lat: number; lng: number }; distanceMiles: number }[];
     fireStations: { item: { name: string; stationNum: string; type: string; phone: string; lat: number; lng: number }; distanceMiles: number }[];
+    recCenters?: { item: { name: string; parkName: string; address: string; neighborhood: string; hasGymnasium: boolean; lat: number; lng: number }; distanceMiles: number }[];
   } | null;
   fireIncidents: {
     total: number;
     byCategory: { name: string; count: number }[];
     recent: any[];
+  } | null;
+  trafficCollisions: {
+    total: number;
+    totalInjured: number;
+    totalKilled: number;
+    hitAndRun: number;
+    byChargeType: { name: string; count: number }[];
+    recent: any[];
+  } | null;
+  streetSweeping: {
+    found: boolean;
+    schedule: string;
+    isPosted: boolean;
+    segment: any;
+    nearbySegments: any[];
   } | null;
 }
 
@@ -70,7 +86,7 @@ function StatBar({ label, count, max, color = 'from-primary to-accent' }: { labe
   );
 }
 
-export default function BriefingTab({ stats311, permitStats, items311, neighborhood, councilDistrict, civic, fireIncidents }: Props) {
+export default function BriefingTab({ stats311, permitStats, items311, neighborhood, councilDistrict, civic, fireIncidents, trafficCollisions, streetSweeping }: Props) {
   const topCats = stats311?.topCategories || [];
   const maxCount = topCats.length > 0 ? topCats[0].count : 1;
 
@@ -121,6 +137,65 @@ export default function BriefingTab({ stats311, permitStats, items311, neighborh
                 <p className="text-xs font-medium text-foreground truncate">Station {fs.item.stationNum}</p>
                 <p className="text-[10px] text-muted">{fs.distanceMiles} mi</p>
               </div>
+            ))}
+            {civic.recCenters?.slice(0, 2).map((rc) => (
+              <div key={rc.item.name} className="bg-surface-alt rounded-xl p-2.5 border border-border hover:border-success/30 transition-colors">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-xs">🏀</span>
+                  <span className="text-[10px] font-medium text-success uppercase">Rec Center</span>
+                </div>
+                <p className="text-xs font-medium text-foreground truncate">{rc.item.name}</p>
+                <p className="text-[10px] text-muted">{rc.distanceMiles} mi{rc.item.hasGymnasium ? ' · Gym' : ''}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Street Sweeping */}
+      {streetSweeping && streetSweeping.schedule && (
+        <section className="animate-fade-in stagger-1">
+          <h3 className="text-[11px] font-medium text-muted uppercase tracking-wider mb-2">Street Sweeping</h3>
+          <div className="bg-surface-alt rounded-xl p-3 border border-border">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-base">🧹</span>
+              <span className="text-xs font-semibold text-foreground">{streetSweeping.schedule}</span>
+            </div>
+            <div className="flex items-center gap-2 text-[10px]">
+              {streetSweeping.isPosted ? (
+                <span className="px-2 py-0.5 rounded-full bg-warning/15 text-warning font-medium">Posted — No Parking Enforced</span>
+              ) : (
+                <span className="px-2 py-0.5 rounded-full bg-success/15 text-success font-medium">Not Posted — Voluntary</span>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Traffic Collisions */}
+      {trafficCollisions && trafficCollisions.total > 0 && (
+        <section className="animate-fade-in stagger-2">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-[11px] font-medium text-muted uppercase tracking-wider">Traffic Collisions (2yr)</h3>
+            <span className="text-[10px] text-danger font-semibold tabular-nums">{trafficCollisions.total.toLocaleString()}</span>
+          </div>
+          <div className="bg-surface-alt rounded-xl p-3 border border-border">
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              <div className="text-center">
+                <div className="text-lg font-bold text-danger tabular-nums">{trafficCollisions.totalInjured}</div>
+                <div className="text-[9px] text-muted">Injured</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-danger tabular-nums">{trafficCollisions.totalKilled}</div>
+                <div className="text-[9px] text-muted">Fatal</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-warning tabular-nums">{trafficCollisions.hitAndRun}</div>
+                <div className="text-[9px] text-muted">Hit & Run</div>
+              </div>
+            </div>
+            {trafficCollisions.byChargeType.slice(0, 4).map((ct) => (
+              <StatBar key={ct.name} label={ct.name} count={ct.count} max={trafficCollisions.byChargeType[0]?.count || 1} color="from-danger to-warning" />
             ))}
           </div>
         </section>

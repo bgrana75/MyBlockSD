@@ -5,9 +5,11 @@ import { queryByRadius, computeStats } from '../services/data311.js';
 import { queryPermitsByRadius, computePermitStats } from '../services/permits.js';
 import { resolveToSdpd } from '../services/neighborhoodMap.js';
 import { lookupDistrict } from '../services/councilDistricts.js';
-import { nearestLibraries, nearestFireStations } from '../services/civicPoints.js';
+import { nearestLibraries, nearestFireStations, nearestRecCenters } from '../services/civicPoints.js';
 import { queryFireIncidentsByZip } from '../services/fireIncidents.js';
 import { getDistrictBudget } from '../services/councilBudget.js';
+import { queryCollisionsByStreet } from '../services/trafficCollisions.js';
+import { lookupSweeping } from '../services/streetSweeping.js';
 
 export const briefingRouter = Router();
 
@@ -35,6 +37,8 @@ briefingRouter.post('/briefing', async (req, res) => {
     let neighborhood: string | null = null;
     let displayName = address;
     let zip: string | null = null;
+    let houseNumber: string | null = null;
+    let road: string | null = null;
 
     if (lat && lng) {
       // Use provided coordinates
@@ -45,6 +49,8 @@ briefingRouter.post('/briefing', async (req, res) => {
       neighborhood = geo.neighborhood;
       displayName = geo.displayName;
       zip = geo.zip;
+      houseNumber = geo.houseNumber;
+      road = geo.road;
     }
 
     const sdpdNeighborhood = resolveToSdpd(neighborhood);
@@ -66,6 +72,17 @@ briefingRouter.post('/briefing', async (req, res) => {
 
     // Council budget
     const budget = councilDistrict ? getDistrictBudget(councilDistrict.district) : null;
+
+    // Rec centers
+    const recCentersNearby = nearestRecCenters(lat!, lng!, 3);
+
+    // Traffic collisions by street
+    const collisions = road ? queryCollisionsByStreet(road) : null;
+
+    // Street sweeping
+    const sweeping = (houseNumber && road)
+      ? lookupSweeping(parseInt(houseNumber), road)
+      : null;
 
     res.json({
       location: {
@@ -92,8 +109,11 @@ briefingRouter.post('/briefing', async (req, res) => {
       civic: {
         libraries,
         fireStations: fireStationsNearby,
+        recCenters: recCentersNearby,
       },
       fireIncidents: fireIncidents || undefined,
+      trafficCollisions: collisions || undefined,
+      streetSweeping: sweeping || undefined,
       lastUpdated: new Date().toISOString(),
     });
   } catch (err: any) {

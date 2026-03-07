@@ -41,11 +41,27 @@ interface BriefingData {
   civic?: {
     libraries: any[];
     fireStations: any[];
+    recCenters?: any[];
   };
   fireIncidents?: {
     total: number;
     byCategory: { name: string; count: number }[];
     recent: any[];
+  };
+  trafficCollisions?: {
+    total: number;
+    totalInjured: number;
+    totalKilled: number;
+    hitAndRun: number;
+    byChargeType: { name: string; count: number }[];
+    recent: any[];
+  };
+  streetSweeping?: {
+    found: boolean;
+    schedule: string;
+    isPosted: boolean;
+    segment: any;
+    nearbySegments: any[];
   };
 }
 
@@ -133,8 +149,8 @@ export default function Home() {
               {[
                 { label: '311 Reports', icon: '📋', color: 'from-primary/20 to-primary/5' },
                 { label: 'Permits', icon: '🏗️', color: 'from-success/20 to-success/5' },
-                { label: 'Fire/EMS', icon: '🚒', color: 'from-danger/20 to-danger/5' },
-                { label: 'Live PD', icon: '🔴', color: 'from-warning/20 to-warning/5' },
+                { label: 'Collisions', icon: '🚗', color: 'from-danger/20 to-danger/5' },
+                { label: 'Sweeping', icon: '🧹', color: 'from-warning/20 to-warning/5' },
               ].map((item) => (
                 <div key={item.label} className={`bg-gradient-to-b ${item.color} rounded-xl p-3 border border-border`}>
                   <div className="text-xl mb-1">{item.icon}</div>
@@ -199,20 +215,19 @@ export default function Home() {
               delay={1}
             />
             <StatCard
-              label="Fire/EMS"
-              value={briefing.fireIncidents?.total || 0}
-              icon="🚒"
+              label="Collisions"
+              value={briefing.trafficCollisions?.total || 0}
+              icon="🚗"
               color="danger"
-              subtext={`YTD in ${loc?.zip || 'area'}`}
+              subtext={`${briefing.trafficCollisions?.totalInjured || 0} injured · 2yr`}
               delay={2}
             />
             <StatCard
-              label="District Budget"
-              value={loc?.councilDistrict?.budget?.totalBudget || 0}
-              icon="💰"
+              label="Fire/EMS"
+              value={briefing.fireIncidents?.total || 0}
+              icon="🚒"
               color="warning"
-              isCurrency
-              subtext={loc?.councilDistrict ? `District ${loc.councilDistrict.district} · FY${loc.councilDistrict.budget?.fiscalYear || ''}` : 'N/A'}
+              subtext={`YTD in ${loc?.zip || 'area'}`}
               delay={3}
             />
           </div>
@@ -282,6 +297,8 @@ export default function Home() {
                         councilDistrict={loc?.councilDistrict || null}
                         civic={briefing.civic || null}
                         fireIncidents={briefing.fireIncidents || null}
+                        trafficCollisions={briefing.trafficCollisions || null}
+                        streetSweeping={briefing.streetSweeping || null}
                       />
                     </div>
                     <div className={activeTab === 'rightnow' ? 'h-full' : 'hidden'}>
@@ -309,7 +326,7 @@ export default function Home() {
 
           {/* Data sources footer */}
           <div className="flex flex-wrap items-center justify-center gap-3 py-2 text-[10px] text-muted/40 animate-fade-in stagger-6">
-            {['311/Get It Done', 'Development Permits', 'Fire/EMS Incidents', 'SDPD Dispatch', 'Council Districts', 'Operating Budget', 'Libraries', 'Fire Stations'].map((src) => (
+            {['311/Get It Done', 'Development Permits', 'Traffic Collisions', 'Fire/EMS Incidents', 'Street Sweeping', 'SDPD Dispatch', 'Council Districts', 'Budget', 'Libraries', 'Fire Stations', 'Rec Centers'].map((src) => (
               <span key={src} className="flex items-center gap-1">
                 <span className="w-1 h-1 rounded-full bg-muted/30" />
                 {src}
