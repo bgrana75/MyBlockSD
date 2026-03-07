@@ -125,6 +125,7 @@ export default function BriefingTab({ stats311, permitStats, items311, neighborh
                   <span className="text-[10px] font-medium text-accent uppercase">Library</span>
                 </div>
                 <p className="text-xs font-medium text-foreground truncate">{lib.item.name}</p>
+                <p className="text-[10px] text-muted truncate">{lib.item.address}</p>
                 <p className="text-[10px] text-muted">{lib.distanceMiles} mi</p>
               </div>
             ))}
@@ -135,6 +136,7 @@ export default function BriefingTab({ stats311, permitStats, items311, neighborh
                   <span className="text-[10px] font-medium text-danger uppercase">Fire Station</span>
                 </div>
                 <p className="text-xs font-medium text-foreground truncate">Station {fs.item.stationNum}</p>
+                <p className="text-[10px] text-muted truncate">{fs.item.name}</p>
                 <p className="text-[10px] text-muted">{fs.distanceMiles} mi</p>
               </div>
             ))}
@@ -145,6 +147,7 @@ export default function BriefingTab({ stats311, permitStats, items311, neighborh
                   <span className="text-[10px] font-medium text-success uppercase">Rec Center</span>
                 </div>
                 <p className="text-xs font-medium text-foreground truncate">{rc.item.name}</p>
+                <p className="text-[10px] text-muted truncate">{rc.item.address}</p>
                 <p className="text-[10px] text-muted">{rc.distanceMiles} mi{rc.item.hasGymnasium ? ' · Gym' : ''}</p>
               </div>
             ))}
@@ -229,6 +232,7 @@ export default function BriefingTab({ stats311, permitStats, items311, neighborh
             Report Issue
           </a>
         </div>
+        <p className="text-[10px] text-muted/60 mb-2">Currently open requests within 0.5 mi · updated daily from City of San Diego</p>
         {topCats.length > 0 && (
           <div className="bg-surface-alt rounded-xl p-3 border border-border">
             {topCats.slice(0, 5).map((cat) => (
@@ -257,6 +261,7 @@ export default function BriefingTab({ stats311, permitStats, items311, neighborh
           <h3 className="text-[11px] font-medium text-muted uppercase tracking-wider">Development Permits</h3>
           <span className="text-[10px] text-success font-semibold tabular-nums">{permitStats?.total?.toLocaleString() || 0}</span>
         </div>
+        <p className="text-[10px] text-muted/60 mb-2">Active permits within 0.5 mi · since 2024</p>
         {permitTypes.length > 0 && (
           <div className="bg-surface-alt rounded-xl p-3 border border-border">
             {permitTypes.map((item) => (

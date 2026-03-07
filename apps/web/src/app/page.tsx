@@ -72,6 +72,7 @@ export default function Home() {
   const [agentAvailable, setAgentAvailable] = useState(false);
   const [searchedAddress, setSearchedAddress] = useState('');
   const [chatOpen, setChatOpen] = useState(false);
+  const [detailModal, setDetailModal] = useState<'collisions' | 'fire' | null>(null);
 
   useEffect(() => {
     getStatus().then((s) => setAgentAvailable(s.agentAvailable)).catch(() => {});
@@ -227,6 +228,7 @@ export default function Home() {
               color="danger"
               subtext={`${briefing.trafficCollisions?.totalInjured || 0} injured · 2yr`}
               delay={2}
+              onDetails={() => setDetailModal('collisions')}
             />
             <StatCard
               label="Fire/EMS"
@@ -235,6 +237,7 @@ export default function Home() {
               color="warning"
               subtext={`YTD in ${loc?.zip || 'area'}`}
               delay={3}
+              onDetails={() => setDetailModal('fire')}
             />
           </div>
 
@@ -282,6 +285,95 @@ export default function Home() {
                 {src}
               </span>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Detail Modal */}
+      {detailModal && briefing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setDetailModal(null)} />
+          <div className="relative w-full max-w-lg max-h-[80vh] bg-surface border border-border rounded-2xl flex flex-col overflow-hidden animate-fade-in shadow-2xl shadow-black/50 mx-4">
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-surface-alt">
+              <div className="flex items-center gap-2.5">
+                <span className="text-lg">{detailModal === 'collisions' ? '🚗' : '🚒'}</span>
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">
+                    {detailModal === 'collisions' ? 'Traffic Collisions (2yr)' : 'Fire/EMS Incidents (YTD)'}
+                  </h3>
+                  <p className="text-[10px] text-muted">
+                    {detailModal === 'collisions'
+                      ? `${briefing.trafficCollisions?.total || 0} collisions · ${briefing.trafficCollisions?.totalInjured || 0} injured · ${briefing.trafficCollisions?.totalKilled || 0} fatal · ${briefing.trafficCollisions?.hitAndRun || 0} hit & run`
+                      : `${briefing.fireIncidents?.total || 0} incidents in ${loc?.zip || 'area'}`}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setDetailModal(null)}
+                className="w-8 h-8 rounded-lg hover:bg-surface flex items-center justify-center text-muted hover:text-foreground transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal body */}
+            <div className="overflow-y-auto flex-1 p-4 space-y-2">
+              {detailModal === 'collisions' && briefing.trafficCollisions?.recent?.map((c: any, i: number) => (
+                <div key={i} className="bg-surface-alt rounded-lg border border-border p-3 space-y-1">
+                  <div className="flex items-start justify-between">
+                    <span className="text-sm font-medium text-foreground">{c.chargeDesc || 'Unknown'}</span>
+                    {c.hitRunLevel && c.hitRunLevel !== 'Not Hit and Run' && (
+                      <span className="text-[10px] bg-danger/20 text-danger px-1.5 py-0.5 rounded font-medium">Hit & Run</span>
+                    )}
+                  </div>
+                  <div className="text-xs text-muted">{c.address || 'No address'}</div>
+                  <div className="flex items-center gap-3 text-[11px] text-muted">
+                    <span>{new Date(c.dateTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    {c.injured > 0 && <span className="text-danger">⚠ {c.injured} injured</span>}
+                    {c.killed > 0 && <span className="text-danger font-bold">☠ {c.killed} fatal</span>}
+                  </div>
+                </div>
+              ))}
+
+              {detailModal === 'fire' && (
+                <>
+                  {/* Category breakdown */}
+                  <div className="bg-surface-alt rounded-lg border border-border p-3 mb-3">
+                    <div className="text-[10px] text-muted uppercase tracking-wider mb-2">By Category</div>
+                    <div className="space-y-1.5">
+                      {briefing.fireIncidents?.byCategory?.slice(0, 8).map((cat: any) => (
+                        <div key={cat.name} className="flex items-center justify-between">
+                          <span className="text-xs text-foreground truncate flex-1">{cat.name}</span>
+                          <span className="text-xs text-warning font-mono ml-2">{cat.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Recent incidents */}
+                  <div className="text-[10px] text-muted uppercase tracking-wider mb-1">Most Recent ({briefing.fireIncidents?.recent?.length || 0})</div>
+                  {briefing.fireIncidents?.recent?.map((inc: any, i: number) => (
+                    <div key={i} className="bg-surface-alt rounded-lg border border-border p-3 space-y-0.5">
+                      <div className="flex items-start justify-between">
+                        <span className="text-sm font-medium text-foreground">{inc.problem || inc.category}</span>
+                        <span className="text-[10px] text-warning bg-warning/10 px-1.5 py-0.5 rounded">{inc.category}</span>
+                      </div>
+                      <div className="text-xs text-muted">
+                        {new Date(inc.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {inc.city && ` · ${inc.city}`}
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {((detailModal === 'collisions' && (!briefing.trafficCollisions?.recent || briefing.trafficCollisions.recent.length === 0)) ||
+                (detailModal === 'fire' && (!briefing.fireIncidents?.recent || briefing.fireIncidents.recent.length === 0))) && (
+                <div className="text-center text-muted text-sm py-8">No data available</div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -348,7 +440,7 @@ export default function Home() {
   );
 }
 
-function StatCard({ label, value, icon, color, subtext, isCurrency, delay }: {
+function StatCard({ label, value, icon, color, subtext, isCurrency, delay, onDetails }: {
   label: string;
   value: number;
   icon: string;
@@ -356,6 +448,7 @@ function StatCard({ label, value, icon, color, subtext, isCurrency, delay }: {
   subtext: string;
   isCurrency?: boolean;
   delay: number;
+  onDetails?: () => void;
 }) {
   const colorMap = {
     primary: 'from-primary/15 to-primary/5 border-primary/20 glow-primary',
@@ -387,7 +480,17 @@ function StatCard({ label, value, icon, color, subtext, isCurrency, delay }: {
       <div className={`text-2xl font-bold ${textColor[color]} tabular-nums animate-count`}>
         {formatted}
       </div>
-      <div className="text-[10px] text-muted mt-0.5 truncate">{subtext}</div>
+      <div className="flex items-center justify-between mt-0.5">
+        <span className="text-[10px] text-muted truncate">{subtext}</span>
+        {onDetails && (
+          <button
+            onClick={onDetails}
+            className="text-[10px] font-medium text-foreground/70 hover:text-foreground bg-white/5 hover:bg-white/10 px-2 py-0.5 rounded transition-colors"
+          >
+            Details
+          </button>
+        )}
+      </div>
     </div>
   );
 }
