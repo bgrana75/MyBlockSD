@@ -123,28 +123,31 @@ export async function* runAgent(
       messages: currentMessages,
     });
 
+    // Emit text blocks immediately
     for (const block of response.content) {
       if (block.type === 'text') {
         yield { type: 'text', content: block.text };
       } else if (block.type === 'tool_use') {
         yield { type: 'tool_use', content: `Looking up ${block.name.replace('get_', '').replace('_', ' ')}...` };
-        const result = await executeTool(block.name, block.input as Record<string, any>);
-        currentMessages.push({ role: 'assistant', content: response.content });
-        currentMessages.push({
-          role: 'user',
-          content: [{ type: 'tool_result', tool_use_id: block.id, content: result }],
-        });
       }
     }
 
-    if (response.stop_reason === 'end_turn') {
+    if (response.stop_reason === 'end_turn' || response.stop_reason !== 'tool_use') {
       yield { type: 'done', content: '' };
       return;
     }
 
-    if (response.stop_reason !== 'tool_use') {
-      yield { type: 'done', content: '' };
-      return;
+    // Execute all tool calls and collect results
+    const toolResults: Anthropic.ToolResultBlockParam[] = [];
+    for (const block of response.content) {
+      if (block.type === 'tool_use') {
+        const result = await executeTool(block.name, block.input as Record<string, any>);
+        toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result });
+      }
     }
+
+    // Push assistant message once, then all tool results together
+    currentMessages.push({ role: 'assistant', content: response.content });
+    currentMessages.push({ role: 'user', content: toolResults });
   }
 }

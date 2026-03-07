@@ -1,10 +1,8 @@
 import { parse } from 'csv-parse';
 import { Readable } from 'stream';
 import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const PERMITS_URL = 'https://seshat.datasd.org/development_permits_set2/permits_set2_active_datasd.csv';
 
@@ -113,7 +111,7 @@ export async function initPermits() {
     console.log(`[permits] Downloaded ${permits.length} permits from portal`);
   } catch (err) {
     console.warn(`[permits] Download failed, loading fallback JSON:`, err);
-    permits = JSON.parse(readFileSync(join(__dirname, '../../data/permits.json'), 'utf-8'));
+    permits = JSON.parse(readFileSync(join(process.cwd(), 'data/permits.json'), 'utf-8'));
     dataSource = 'fallback';
     lastRefresh = new Date();
     console.log(`[permits] Loaded ${permits.length} permits from fallback JSON`);

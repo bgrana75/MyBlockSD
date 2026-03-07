@@ -1,10 +1,8 @@
 import { parse } from 'csv-parse';
 import { Readable } from 'stream';
 import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const DATA_311_URL = 'https://seshat.datasd.org/get_it_done_reports/get_it_done_requests_open_datasd.csv';
 
@@ -80,7 +78,7 @@ async function downloadAndParse311(): Promise<Item311[]> {
 
 export async function initData311() {
   // Load closed stats from disk (always)
-  closedStats = JSON.parse(readFileSync(join(__dirname, '../../data/311_closed_stats.json'), 'utf-8'));
+  closedStats = JSON.parse(readFileSync(join(process.cwd(), 'data/311_closed_stats.json'), 'utf-8'));
 
   try {
     const fresh = await downloadAndParse311();
@@ -90,7 +88,7 @@ export async function initData311() {
     console.log(`[311] Downloaded ${items.length} items from portal`);
   } catch (err) {
     console.warn(`[311] Download failed, loading fallback JSON:`, err);
-    items = JSON.parse(readFileSync(join(__dirname, '../../data/311_open.json'), 'utf-8'));
+    items = JSON.parse(readFileSync(join(process.cwd(), 'data/311_open.json'), 'utf-8'));
     dataSource = 'fallback';
     lastRefresh = new Date();
     console.log(`[311] Loaded ${items.length} items from fallback JSON`);
