@@ -4,6 +4,15 @@
 
 Built for the Claude AI Hackathon San Diego, March 2026.
 
+## Live Deployment
+
+| Layer | URL |
+|-------|-----|
+| **Frontend** | [https://myblocksd.xyz](https://myblocksd.xyz) |
+| **API** | [https://api.myblocksd.xyz](https://api.myblocksd.xyz) |
+| **MCP Server** | `https://api.myblocksd.xyz/mcp` (Streamable HTTP) |
+| **Health Check** | [https://api.myblocksd.xyz/healthz](https://api.myblocksd.xyz/healthz) |
+
 ## What It Does
 
 - **Briefing** — View open 311 (Get It Done) service requests near any address: top issue categories, average response times, and a sortable list of recent reports. Includes a direct link to report new issues.
@@ -118,15 +127,86 @@ Connect the GitHub repo to Vercel, set root directory to `apps/web`, and add `NE
 
 ## MCP Integration
 
-The backend exposes an MCP endpoint at `/mcp` using Streamable HTTP transport. Available tools:
+The backend exposes an MCP endpoint at `https://api.myblocksd.xyz/mcp` using Streamable HTTP transport.
 
-| Tool | Description |
-|------|-------------|
-| `myblock.resolve_location` | Geocode an address to lat/lng + neighborhood |
-| `myblock.get_311` | Query 311 service requests by radius |
-| `myblock.get_permits` | Query development permits by radius |
-| `myblock.get_live_sdpd` | Get live SDPD dispatch by neighborhood |
-| `myblock.get_briefing` | Full briefing (311 + permits + stats) |
+### Connecting from Claude Desktop / MCP Clients
+
+Add to your MCP client configuration:
+
+```json
+{
+  "mcpServers": {
+    "myblock-sd": {
+      "url": "https://api.myblocksd.xyz/mcp"
+    }
+  }
+}
+```
+
+### Available MCP Tools
+
+| Tool | Description | Key Parameters |
+|------|-------------|----------------|
+| `myblock.resolve_location` | Geocode an address to lat/lng + neighborhood | `address` (string) |
+| `myblock.get_311` | Query 311 service requests near a location | `lat`, `lng`, `radiusMiles` (default 0.5), `daysBack` |
+| `myblock.get_permits` | Query development permits near a location | `lat`, `lng`, `radiusMiles`, `daysBack` |
+| `myblock.get_live_sdpd` | Get live SDPD dispatch by neighborhood | `neighborhood` (string, uppercase e.g. "NORTH PARK") |
+| `myblock.get_briefing` | Full briefing combining 311 + permits + SDPD | `address`, `radiusMiles`, `daysBack` |
+
+## REST API
+
+Base URL: `https://api.myblocksd.xyz`
+
+### POST `/api/briefing`
+
+Get 311 service requests, permits, and stats near an address.
+
+```bash
+curl -X POST https://api.myblocksd.xyz/api/briefing \
+  -H 'Content-Type: application/json' \
+  -d '{"address": "1600 Pacific Hwy, San Diego", "radiusMiles": 0.5}'
+```
+
+**Parameters:**
+- `address` (string, required) — street address to search
+- `radiusMiles` (number, 0.1–5, default 0.5) — search radius
+- `daysBack` (number, optional) — limit to last N days
+- `lat`, `lng` (number, optional) — override geocoding with direct coordinates
+
+### POST `/api/live`
+
+Get current SDPD police dispatch for a neighborhood.
+
+```bash
+curl -X POST https://api.myblocksd.xyz/api/live \
+  -H 'Content-Type: application/json' \
+  -d '{"neighborhood": "NORTH PARK"}'
+```
+
+### POST `/api/chat`
+
+Chat with the AI assistant (Server-Sent Events stream).
+
+```bash
+curl -X POST https://api.myblocksd.xyz/api/chat \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "messages": [{"role": "user", "content": "What are the top issues in North Park?"}],
+    "locationContext": {"address": "3000 University Ave", "lat": 32.749, "lng": -117.129, "neighborhood": "North Park"}
+  }'
+```
+
+### GET `/api/status`
+
+Check data readiness, record counts, and refresh timestamps.
+
+### GET `/healthz`
+
+Simple health check — returns `{"status": "ok"}`.
+
+### GET `/readyz`
+
+Readiness probe — returns 200 `{"status": "ready"}` or 503 `{"status": "loading"}`.
 
 ## Safety
 
