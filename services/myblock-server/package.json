@@ -1,0 +1,26 @@
+{
+  "name": "myblock-server",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsup src/index.ts --format esm --dts",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "express": "^4.21",
+    "cors": "^2.8",
+    "zod": "^3.23",
+    "cheerio": "^1.0",
+    "csv-parse": "^5.6",
+    "@modelcontextprotocol/sdk": "^1.12",
+    "@anthropic-ai/sdk": "^0.39"
+  },
+  "devDependencies": {
+    "@types/express": "^5",
+    "@types/cors": "^2",
+    "tsx": "^4",
+    "tsup": "^8",
+    "typescript": "^5.7"
+  }
+}

@@ -1,0 +1,135 @@
+// Maps 311 Community Plan names → SDPD neighborhood names
+// Reverse map (SDPD neighborhood → 311 community plan) built at runtime
+
+const COMMUNITY_PLAN_TO_SDPD: Record<string, string[]> = {
+  "BALBOA PARK": ["BALBOA PARK"],
+  "BARRIO LOGAN": ["BARRIO LOGAN", "LOGAN HEIGHTS", "SHERMAN HEIGHTS"],
+  "BLACK MOUNTAIN RANCH": ["BLACK MOUNTAIN RANCH"],
+  "CARMEL MOUNTAIN RANCH": ["CARMEL MOUNTAIN"],
+  "CARMEL VALLEY": ["CARMEL VALLEY"],
+  "CLAIREMONT MESA": ["BAY HO", "BAY PARK", "CLAIREMONT"],
+  "COLLEGE AREA": ["COLLEGE EAST", "COLLEGE WEST"],
+  "DEL MAR MESA": ["DEL MAR HEIGHTS"],
+  "DOWNTOWN": ["CORE-COLUMBIA", "CORTEZ", "EAST VILLAGE", "GASLAMP", "HARBORVIEW", "LITTLE ITALY", "MARINA"],
+  "ENCANTO NEIGHBORHOODS": ["ALTA VISTA", "BROADWAY HEIGHTS", "CHOLLAS VIEW", "EMERALD HILLS", "ENCANTO", "LINCOLN PARK", "VALENCIA PARK"],
+  "GREATER GOLDEN HILL": ["GOLDEN HILL", "SOUTH PARK"],
+  "KEARNY MESA": ["KEARNY MESA"],
+  "LA JOLLA": ["LA JOLLA"],
+  "LINDA VISTA": ["BURLINGAME", "LINDA VISTA", "MORENA"],
+  "MID-CITY:CITY HEIGHTS": ["AZALEA/HOLLYWOOD PARK", "CASTLE", "CHEROKEE POINT", "CHOLLAS CREEK", "COLINA DEL SOL", "FAIRMOUNT PARK", "FAIRMOUNT VILLAGE", "ISLENAIR", "TERALTA EAST", "TERALTA WEST"],
+  "MID-CITY:EASTERN AREA": ["EL CERRITO", "OAK PARK", "ROLANDO", "ROLANDO PARK"],
+  "MID-CITY:KENSINGTON-TALMADGE": ["ADAMS NORTH", "TALMADGE"],
+  "MID-CITY:NORMAL HEIGHTS": ["NORMAL HEIGHTS"],
+  "MIDWAY-PACIFIC HIGHWAY": ["MIDWAY DISTRICT", "MIDTOWN"],
+  "MILITARY FACILITIES": ["MIRAMAR"],
+  "MIRA MESA": ["MIRA MESA"],
+  "MIRAMAR RANCH NORTH": ["MIRAMAR RANCH NORTH"],
+  "MISSION VALLEY": ["GRANTVILLE"],
+  "NAVAJO": ["ALLIED GARDENS", "DEL CERRO", "LAKE MURRAY", "SAN CARLOS"],
+  "NORTH PARK": ["NORTH PARK"],
+  "OCEAN BEACH": ["OCEAN BEACH", "OCEAN CREST", "SUNSET CLIFFS"],
+  "OLD TOWN SAN DIEGO": ["OLD TOWN"],
+  "OTAY MESA": ["OTAY MESA", "OTAY MESA WEST"],
+  "OTAY MESA-NESTOR": ["NESTOR", "PALM CITY", "EGGER HIGHLANDS"],
+  "PACIFIC BEACH": ["PACIFIC BEACH", "NORTH CITY"],
+  "PENINSULA": ["LA PLAYA", "LOMA PORTAL", "POINT LOMA HEIGHTS", "ROSEVILLE / FLEET RIDGE", "WOODED AREA"],
+  "RANCHO BERNARDO": ["RANCHO BERNARDO"],
+  "RANCHO ENCANTADA": ["RANCHO ENCANTADA"],
+  "RANCHO PENASQUITOS": ["RANCHO PENASQUITOS"],
+  "SABRE SPRINGS": ["SABRE SPRINGS"],
+  "SAN PASQUAL": ["SAN PASQUAL"],
+  "SAN YSIDRO": ["SAN YSIDRO"],
+  "SCRIPPS MIRAMAR RANCH": ["SCRIPPS RANCH"],
+  "SERRA MESA": ["SERRA MESA"],
+  "SKYLINE-PARADISE HILLS": ["BAY TERRACES", "PARADISE HILLS", "SKYLINE", "JAMACHA LOMITA"],
+  "SOUTHEASTERN SAN DIEGO": ["GRANT HILL", "MOUNTAIN VIEW", "MT HOPE", "O'FARRELL", "REDWOOD VILLAGE", "RIDGEVIEW/WEBSTER", "SHELLTOWN", "SOUTHCREST"],
+  "TIERRASANTA": ["TIERRASANTA"],
+  "TIJUANA RIVER VALLEY": ["TIJUANA RIVER VALLEY", "BORDER"],
+  "TORREY HIGHLANDS": ["TORREY HIGHLANDS"],
+  "TORREY HILLS": ["TORREY PRESERVE"],
+  "TORREY PINES": ["TORREY PINES", "SORRENTO VALLEY"],
+  "UNIVERSITY": ["UNIVERSITY CITY"],
+  "UPTOWN": ["HILLCREST", "UNIVERSITY HEIGHTS", "PARK WEST", "CORRIDOR", "BIRDLAND"],
+};
+
+// Reverse map: SDPD neighborhood → 311 community plan
+const SDPD_TO_COMMUNITY_PLAN = new Map<string, string>();
+for (const [plan, neighborhoods] of Object.entries(COMMUNITY_PLAN_TO_SDPD)) {
+  for (const n of neighborhoods) {
+    SDPD_TO_COMMUNITY_PLAN.set(n, plan);
+  }
+}
+
+// All known SDPD neighborhoods (for dropdown fallback)
+const ALL_SDPD_NEIGHBORHOODS: string[] = Object.values(COMMUNITY_PLAN_TO_SDPD)
+  .flat()
+  .sort();
+
+// Geocoder suburb/quarter → SDPD neighborhood best guess
+// Some geocoder names map directly, some need translation
+const GEOCODER_TO_SDPD: Record<string, string> = {
+  "NORTH PARK": "NORTH PARK",
+  "HILLCREST": "HILLCREST",
+  "PACIFIC BEACH": "PACIFIC BEACH",
+  "LA JOLLA": "LA JOLLA",
+  "OCEAN BEACH": "OCEAN BEACH",
+  "CITY HEIGHTS": "COLINA DEL SOL", // best guess for City Heights
+  "MID-CITY": "COLINA DEL SOL",
+  "NORTH CLAIREMONT": "CLAIREMONT",
+  "CLAIREMONT": "CLAIREMONT",
+  "KEARNY MESA": "KEARNY MESA",
+  "MIRA MESA": "MIRA MESA",
+  "RANCHO PENASQUITOS": "RANCHO PENASQUITOS",
+  "SCRIPPS RANCH": "SCRIPPS RANCH",
+  "SERRA MESA": "SERRA MESA",
+  "TIERRASANTA": "TIERRASANTA",
+  "UNIVERSITY CITY": "UNIVERSITY CITY",
+  "GOLDEN HILL": "GOLDEN HILL",
+  "SOUTH PARK": "SOUTH PARK",
+  "NORMAL HEIGHTS": "NORMAL HEIGHTS",
+  "UNIVERSITY HEIGHTS": "UNIVERSITY HEIGHTS",
+  "OLD TOWN": "OLD TOWN",
+  "LITTLE ITALY": "LITTLE ITALY",
+  "EAST VILLAGE": "EAST VILLAGE",
+  "GASLAMP": "GASLAMP",
+  "DOWNTOWN": "CORE-COLUMBIA",
+  "BARRIO LOGAN": "BARRIO LOGAN",
+  "LOGAN HEIGHTS": "LOGAN HEIGHTS",
+  "LINDA VISTA": "LINDA VISTA",
+  "BAY PARK": "BAY PARK",
+  "RANCHO BERNARDO": "RANCHO BERNARDO",
+  "CARMEL VALLEY": "CARMEL VALLEY",
+  "SAN YSIDRO": "SAN YSIDRO",
+  "POINT LOMA": "LOMA PORTAL",
+  "LOMA PORTAL": "LOMA PORTAL",
+  "ENCANTO": "ENCANTO",
+  "PARADISE HILLS": "PARADISE HILLS",
+  "SKYLINE": "SKYLINE",
+  "OAK PARK": "OAK PARK",
+  "TALMADGE": "TALMADGE",
+};
+
+/** Resolve a geocoder neighborhood name to an SDPD neighborhood */
+export function resolveToSdpd(geocoderName: string | null): string | null {
+  if (!geocoderName) return null;
+  const upper = geocoderName.toUpperCase().trim();
+  // Direct match in SDPD neighborhoods
+  if (SDPD_TO_COMMUNITY_PLAN.has(upper)) return upper;
+  // Geocoder mapping
+  return GEOCODER_TO_SDPD[upper] || null;
+}
+
+/** Get the 311 community plan name for an SDPD neighborhood */
+export function sdpdToCommunityPlan(sdpdNeighborhood: string): string | null {
+  return SDPD_TO_COMMUNITY_PLAN.get(sdpdNeighborhood.toUpperCase()) || null;
+}
+
+/** Get all SDPD neighborhoods for a 311 community plan */
+export function communityPlanToSdpd(communityPlan: string): string[] {
+  return COMMUNITY_PLAN_TO_SDPD[communityPlan.toUpperCase()] || [];
+}
+
+/** Get all known SDPD neighborhood names */
+export function getAllSdpdNeighborhoods(): string[] {
+  return ALL_SDPD_NEIGHBORHOODS;
+}

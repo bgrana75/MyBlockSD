@@ -1,0 +1,19 @@
+node_modules/
+dist/
+.env
+.env.local
+.next/
+*.tsbuildinfo
+.DS_Store
+
+# Planning/spec files — not for GitHub
+AGENT_PROMPT.md
+IMPLEMENTATION.md
+PLAN.md
+my-block-spec-v3.md
+PRESENTATION.md
+
+# Large data files — downloaded at runtime or kept locally
+research/*.csv
+research/*.json
+services/myblock-server/data/
