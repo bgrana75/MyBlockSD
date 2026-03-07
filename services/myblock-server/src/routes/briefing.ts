@@ -4,6 +4,8 @@ import { geocode } from '../services/geocoder.js';
 import { queryByRadius, computeStats } from '../services/data311.js';
 import { queryPermitsByRadius, computePermitStats } from '../services/permits.js';
 import { resolveToSdpd } from '../services/neighborhoodMap.js';
+import { lookupDistrict } from '../services/councilDistricts.js';
+import { nearestLibraries, nearestFireStations } from '../services/civicPoints.js';
 
 export const briefingRouter = Router();
 
@@ -50,6 +52,11 @@ briefingRouter.post('/briefing', async (req, res) => {
     const permitItems = queryPermitsByRadius(lat!, lng!, radiusMiles, daysBack);
     const permitStats = computePermitStats(permitItems);
 
+    // Council district + civic amenities
+    const councilDistrict = lookupDistrict(lat!, lng!);
+    const libraries = nearestLibraries(lat!, lng!, 3);
+    const fireStationsNearby = nearestFireStations(lat!, lng!, 3);
+
     res.json({
       location: {
         display: displayName,
@@ -57,6 +64,7 @@ briefingRouter.post('/briefing', async (req, res) => {
         lng,
         neighborhood: neighborhood || null,
         sdpdNeighborhood: sdpdNeighborhood || null,
+        councilDistrict: councilDistrict || null,
       },
       datasets: {
         getItDone311: {
@@ -67,6 +75,10 @@ briefingRouter.post('/briefing', async (req, res) => {
           items: [...permitItems].sort((a, b) => b.dt.localeCompare(a.dt)).slice(0, 500),
           stats: permitStats,
         },
+      },
+      civic: {
+        libraries,
+        fireStations: fireStationsNearby,
       },
       lastUpdated: new Date().toISOString(),
     });

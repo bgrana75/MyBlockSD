@@ -17,6 +17,11 @@ interface BriefingData {
     lng: number;
     neighborhood: string;
     sdpdNeighborhood: string | null;
+    councilDistrict: {
+      district: number;
+      member: string;
+      title: string;
+    } | null;
   };
   datasets: {
     getItDone311: {
@@ -27,6 +32,10 @@ interface BriefingData {
       items: any[];
       stats: any;
     };
+  };
+  civic?: {
+    libraries: any[];
+    fireStations: any[];
   };
 }
 
@@ -155,6 +164,7 @@ export default function Home() {
                 radiusMiles={0.5}
                 items311={briefing?.datasets.getItDone311.items || []}
                 permits={briefing?.datasets.permits.items || []}
+                civic={briefing?.civic || null}
                 activeTab={activeTab}
               />
             </div>
@@ -204,6 +214,8 @@ export default function Home() {
                           items311={briefing.datasets.getItDone311.items}
                           permits={briefing.datasets.permits.items}
                           neighborhood={loc?.neighborhood || ''}
+                          councilDistrict={loc?.councilDistrict || null}
+                          civic={briefing.civic || null}
                         />
                       )}
                     </div>

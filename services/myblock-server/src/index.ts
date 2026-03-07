@@ -7,6 +7,8 @@ import { healthRouter, setDataReady } from './routes/health.js';
 import { initData311, refreshData311 } from './services/data311.js';
 import { initPermits, refreshPermits } from './services/permits.js';
 import { initSdpdCache } from './services/sdpdDispatch.js';
+import { initCouncilDistricts } from './services/councilDistricts.js';
+import { initCivicPoints } from './services/civicPoints.js';
 import { setupMcp } from './mcp/server.js';
 
 const app = express();
@@ -45,6 +47,8 @@ async function start() {
   // Try live download first, fall back to committed JSON
   await initData311();
   await initPermits();
+  await initCouncilDistricts();
+  await initCivicPoints();
   initSdpdCache();
 
   setDataReady(true);

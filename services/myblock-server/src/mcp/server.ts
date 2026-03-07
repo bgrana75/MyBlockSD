@@ -7,6 +7,8 @@ import { queryByRadius, computeStats } from '../services/data311.js';
 import { queryPermitsByRadius, computePermitStats } from '../services/permits.js';
 import { getByNeighborhood } from '../services/sdpdDispatch.js';
 import { resolveToSdpd } from '../services/neighborhoodMap.js';
+import { lookupDistrict } from '../services/councilDistricts.js';
+import { nearestLibraries, nearestFireStations } from '../services/civicPoints.js';
 
 function createMcpServer() {
   const server = new McpServer({
@@ -120,6 +122,10 @@ function createMcpServer() {
 
       const sdpd = sdpdNeighborhood ? getByNeighborhood(sdpdNeighborhood) : null;
 
+      const councilDistrict = lookupDistrict(geo.lat, geo.lng);
+      const libs = nearestLibraries(geo.lat, geo.lng, 3);
+      const stations = nearestFireStations(geo.lat, geo.lng, 3);
+
       return {
         content: [{
           type: 'text' as const,
@@ -130,11 +136,53 @@ function createMcpServer() {
               neighborhood: geo.neighborhood,
               sdpdNeighborhood,
               displayName: geo.displayName,
+              councilDistrict,
             },
             getItDone311: { items: items311.slice(0, 50), stats: stats311, totalItems: items311.length },
             permits: { items: permitItems.slice(0, 50), stats: permitStats, totalItems: permitItems.length },
             sdpd,
+            civic: { libraries: libs, fireStations: stations },
           }),
+        }],
+      };
+    }
+  );
+
+  // Tool 6: get_council_district
+  server.tool(
+    'myblock.get_council_district',
+    'Look up which San Diego City Council district contains a location and who represents it.',
+    {
+      lat: z.number().describe('Latitude'),
+      lng: z.number().describe('Longitude'),
+    },
+    async ({ lat, lng }) => {
+      const result = lookupDistrict(lat, lng);
+      return {
+        content: [{
+          type: 'text' as const,
+          text: JSON.stringify(result || { error: 'Location not within San Diego city council boundaries' }),
+        }],
+      };
+    }
+  );
+
+  // Tool 7: get_nearby_civic
+  server.tool(
+    'myblock.get_nearby_civic',
+    'Find nearest libraries and fire stations to a location in San Diego.',
+    {
+      lat: z.number().describe('Latitude'),
+      lng: z.number().describe('Longitude'),
+      count: z.number().default(3).describe('Number of nearest results per type'),
+    },
+    async ({ lat, lng, count }) => {
+      const libs = nearestLibraries(lat, lng, count);
+      const stations = nearestFireStations(lat, lng, count);
+      return {
+        content: [{
+          type: 'text' as const,
+          text: JSON.stringify({ libraries: libs, fireStations: stations }),
         }],
       };
     }

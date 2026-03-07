@@ -22,6 +22,10 @@ interface Props {
   radiusMiles: number;
   items311: Item[];
   permits: Item[];
+  civic: {
+    libraries: { item: { name: string; address: string; lat: number; lng: number }; distanceMiles: number }[];
+    fireStations: { item: { name: string; stationNum: string; lat: number; lng: number }; distanceMiles: number }[];
+  } | null;
   activeTab: string;
 }
 
@@ -47,7 +51,7 @@ function RecenterMap({ center }: { center: [number, number] }) {
   return null;
 }
 
-export default function Map({ center, radiusMiles, items311, permits, activeTab }: Props) {
+export default function Map({ center, radiusMiles, items311, permits, civic, activeTab }: Props) {
   const radiusMeters = radiusMiles * 1609.34;
 
   return (
@@ -94,6 +98,41 @@ export default function Map({ center, radiusMiles, items311, permits, activeTab 
               <br />Status: {item.st}
               <br />Date: {item.dt}
               {item.addr && <><br />{item.addr}</>}
+            </div>
+          </Popup>
+        </CircleMarker>
+      ))}
+
+      {/* Libraries */}
+      {activeTab === 'briefing' && civic?.libraries.map((lib) => (
+        <CircleMarker
+          key={`lib-${lib.item.name}`}
+          center={[lib.item.lat, lib.item.lng]}
+          radius={7}
+          pathOptions={{ color: '#0284c7', fillColor: '#0ea5e9', fillOpacity: 0.8, weight: 2 }}
+        >
+          <Popup>
+            <div className="text-xs leading-relaxed">
+              <strong className="text-sm">📚 {lib.item.name} Library</strong>
+              <br />{lib.item.address}
+              <br />{lib.distanceMiles} mi away
+            </div>
+          </Popup>
+        </CircleMarker>
+      ))}
+
+      {/* Fire Stations */}
+      {activeTab === 'briefing' && civic?.fireStations.map((fs) => (
+        <CircleMarker
+          key={`fs-${fs.item.name}`}
+          center={[fs.item.lat, fs.item.lng]}
+          radius={7}
+          pathOptions={{ color: '#dc2626', fillColor: '#ef4444', fillOpacity: 0.8, weight: 2 }}
+        >
+          <Popup>
+            <div className="text-xs leading-relaxed">
+              <strong className="text-sm">🚒 Fire Station {fs.item.stationNum}</strong>
+              <br />{fs.distanceMiles} mi away
             </div>
           </Popup>
         </CircleMarker>
