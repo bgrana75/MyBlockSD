@@ -186,9 +186,19 @@ export default function Home() {
                 <h2 className="text-lg font-bold text-foreground">{loc.neighborhood}</h2>
                 <span className="text-xs text-muted hidden sm:inline">{loc.display?.split(',').slice(0, 2).join(',')}</span>
               </div>
-              {loc.zip && (
-                <span className="text-xs text-muted bg-surface-alt px-2.5 py-1 rounded-lg border border-border font-mono">{loc.zip}</span>
-              )}
+              <div className="flex items-center gap-2">
+                {loc.zip && (
+                  <span className="text-xs text-muted bg-surface-alt px-2.5 py-1 rounded-lg border border-border font-mono">{loc.zip}</span>
+                )}
+                <a
+                  href="https://getitdone.sandiego.gov"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-gradient-to-r from-primary to-accent text-white hover:opacity-90 transition-opacity flex items-center gap-1.5"
+                >
+                  <span>📢</span> Report to Get It Done!
+                </a>
+              </div>
             </div>
           )}
 
