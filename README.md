@@ -162,6 +162,10 @@ Connect the GitHub repo to Vercel, set root directory to `apps/web`, and add `NE
 
 The backend exposes an MCP endpoint at `https://api.myblocksd.xyz/mcp` using Streamable HTTP transport. Any MCP-compatible client (Claude Desktop, Cline, custom agents) can connect and use all 10 tools.
 
+### Agent Skill File
+
+The repo includes a [`SKILL.md`](SKILL.md) file — a structured skill definition that AI agents (such as [OpenClaw](https://openclaw.ai)) can use to understand when and how to invoke My Block tools. It describes all 10 tools with input/output specs, usage patterns, and response guidelines so any agent can provide San Diego neighborhood intelligence out of the box.
+
 ### Connecting from Claude Desktop / MCP Clients
 
 ```json

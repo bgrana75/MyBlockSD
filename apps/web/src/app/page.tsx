@@ -240,8 +240,16 @@ export default function Home() {
             />
           </div>
 
-          {/* Overview */}
+          {/* Live SDPD Dispatch */}
           <div className="bg-surface rounded-xl border border-border overflow-hidden animate-fade-in stagger-5">
+            <RightNowTab
+              neighborhood={loc?.neighborhood || ''}
+              sdpdNeighborhood={loc?.sdpdNeighborhood || null}
+            />
+          </div>
+
+          {/* Overview */}
+          <div className="bg-surface rounded-xl border border-border overflow-hidden animate-fade-in stagger-6">
             <BriefingTab
               stats311={briefing.datasets.getItDone311.stats}
               permitStats={briefing.datasets.permits.stats}
@@ -253,14 +261,6 @@ export default function Home() {
               fireIncidents={briefing.fireIncidents || null}
               trafficCollisions={briefing.trafficCollisions || null}
               streetSweeping={briefing.streetSweeping || null}
-            />
-          </div>
-
-          {/* Live SDPD Dispatch */}
-          <div className="bg-surface rounded-xl border border-border overflow-hidden animate-fade-in stagger-6">
-            <RightNowTab
-              neighborhood={loc?.neighborhood || ''}
-              sdpdNeighborhood={loc?.sdpdNeighborhood || null}
             />
           </div>
 
