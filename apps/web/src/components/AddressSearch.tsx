@@ -27,14 +27,14 @@ export default function AddressSearch({ onSearch, isLoading }: Props) {
           value={address}
           onChange={(e) => setAddress(e.target.value)}
           placeholder="Enter a San Diego address..."
-          className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-surface text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
+          className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-surface-alt text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all text-sm"
           disabled={isLoading}
         />
       </div>
       <button
         type="submit"
         disabled={isLoading || !address.trim()}
-        className="px-5 py-2.5 bg-primary text-white rounded-xl font-medium hover:bg-primary-dark disabled:opacity-40 disabled:cursor-not-allowed transition-all text-sm shadow-sm hover:shadow-md"
+        className="px-5 py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white rounded-xl font-medium hover:from-primary-light hover:to-primary disabled:opacity-40 disabled:cursor-not-allowed transition-all text-sm shadow-sm hover:shadow-lg hover:shadow-primary/20"
       >
         {isLoading ? (
           <span className="flex items-center gap-2">

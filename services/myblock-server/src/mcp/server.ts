@@ -9,6 +9,8 @@ import { getByNeighborhood } from '../services/sdpdDispatch.js';
 import { resolveToSdpd } from '../services/neighborhoodMap.js';
 import { lookupDistrict } from '../services/councilDistricts.js';
 import { nearestLibraries, nearestFireStations } from '../services/civicPoints.js';
+import { queryFireIncidentsByZip } from '../services/fireIncidents.js';
+import { getDistrictBudget } from '../services/councilBudget.js';
 
 function createMcpServer() {
   const server = new McpServer({
@@ -123,8 +125,10 @@ function createMcpServer() {
       const sdpd = sdpdNeighborhood ? getByNeighborhood(sdpdNeighborhood) : null;
 
       const councilDistrict = lookupDistrict(geo.lat, geo.lng);
+      const budget = councilDistrict ? getDistrictBudget(councilDistrict.district) : null;
       const libs = nearestLibraries(geo.lat, geo.lng, 3);
       const stations = nearestFireStations(geo.lat, geo.lng, 3);
+      const fireIncidents = geo.zip ? queryFireIncidentsByZip(geo.zip) : null;
 
       return {
         content: [{
@@ -136,12 +140,16 @@ function createMcpServer() {
               neighborhood: geo.neighborhood,
               sdpdNeighborhood,
               displayName: geo.displayName,
-              councilDistrict,
+              zip: geo.zip,
+              councilDistrict: councilDistrict
+                ? { ...councilDistrict, budget: budget || undefined }
+                : null,
             },
             getItDone311: { items: items311.slice(0, 50), stats: stats311, totalItems: items311.length },
             permits: { items: permitItems.slice(0, 50), stats: permitStats, totalItems: permitItems.length },
             sdpd,
             civic: { libraries: libs, fireStations: stations },
+            fireIncidents: fireIncidents || undefined,
           }),
         }],
       };
@@ -183,6 +191,24 @@ function createMcpServer() {
         content: [{
           type: 'text' as const,
           text: JSON.stringify({ libraries: libs, fireStations: stations }),
+        }],
+      };
+    }
+  );
+
+  // Tool 8: get_fire_incidents
+  server.tool(
+    'myblock.get_fire_incidents',
+    'Get fire and EMS incident statistics for a zip code in San Diego. Current year data updated daily.',
+    {
+      zip: z.string().describe('5-digit zip code (e.g., 92101)'),
+    },
+    async ({ zip }) => {
+      const result = queryFireIncidentsByZip(zip);
+      return {
+        content: [{
+          type: 'text' as const,
+          text: JSON.stringify(result),
         }],
       };
     }

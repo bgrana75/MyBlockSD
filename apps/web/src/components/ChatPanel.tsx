@@ -100,7 +100,7 @@ export default function ChatPanel({ locationContext, agentAvailable }: Props) {
                   key={q}
                   onClick={() => sendMessage(q)}
                   disabled={isStreaming}
-                  className="text-left text-xs bg-surface-hover hover:bg-primary/5 text-foreground/70 hover:text-primary p-3 rounded-xl transition-all disabled:opacity-50 border border-border hover:border-primary/20"
+                  className="text-left text-xs bg-surface-alt hover:bg-primary/10 text-foreground/60 hover:text-primary-light p-3 rounded-xl transition-all disabled:opacity-50 border border-border hover:border-primary/30"
                 >
                   {q}
                 </button>
@@ -112,7 +112,7 @@ export default function ChatPanel({ locationContext, agentAvailable }: Props) {
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : msg.role === 'status' ? 'justify-center' : 'justify-start'}`}>
             {msg.role === 'status' ? (
-              <span className="text-[11px] text-muted bg-surface-hover px-3 py-1 rounded-full flex items-center gap-1.5">
+              <span className="text-[11px] text-muted bg-surface-alt px-3 py-1 rounded-full flex items-center gap-1.5 border border-border">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
                 </svg>
@@ -122,7 +122,7 @@ export default function ChatPanel({ locationContext, agentAvailable }: Props) {
               <div className={`max-w-[85%] px-3.5 py-2.5 text-sm whitespace-pre-wrap leading-relaxed ${
                 msg.role === 'user'
                   ? 'bg-primary text-white rounded-2xl rounded-br-md'
-                  : 'bg-surface-hover text-foreground rounded-2xl rounded-bl-md'
+                  : 'bg-surface-alt text-foreground rounded-2xl rounded-bl-md border border-border'
               }`}>
                 {msg.content}
               </div>
@@ -132,7 +132,7 @@ export default function ChatPanel({ locationContext, agentAvailable }: Props) {
 
         {isStreaming && messages[messages.length - 1]?.role !== 'assistant' && (
           <div className="flex justify-start">
-            <div className="bg-surface-hover px-4 py-3 rounded-2xl rounded-bl-md">
+            <div className="bg-surface-alt px-4 py-3 rounded-2xl rounded-bl-md border border-border">
               <div className="flex gap-1">
                 <span className="w-1.5 h-1.5 bg-muted rounded-full animate-bounce" style={{ animationDelay: '0ms' }}/>
                 <span className="w-1.5 h-1.5 bg-muted rounded-full animate-bounce" style={{ animationDelay: '150ms' }}/>
@@ -155,12 +155,12 @@ export default function ChatPanel({ locationContext, agentAvailable }: Props) {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about your neighborhood..."
             disabled={isStreaming}
-            className="flex-1 px-3.5 py-2 border border-border rounded-xl text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary text-foreground placeholder:text-muted disabled:opacity-50 transition-all"
+            className="flex-1 px-3.5 py-2 border border-border rounded-xl text-sm bg-surface-alt focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 text-foreground placeholder:text-muted disabled:opacity-50 transition-all"
           />
           <button
             type="submit"
             disabled={isStreaming || !input.trim()}
-            className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            className="px-4 py-2 bg-gradient-to-r from-primary to-primary-dark text-white rounded-xl text-sm font-medium hover:from-primary-light hover:to-primary disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />

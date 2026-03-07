@@ -3,6 +3,7 @@ interface GeoResult {
   lng: number;
   neighborhood: string | null;
   displayName: string;
+  zip: string | null;
 }
 
 const cache = new Map<string, GeoResult>();
@@ -37,6 +38,7 @@ export async function geocode(address: string): Promise<GeoResult> {
     lng: parseFloat(item.lon),
     neighborhood: neighborhood?.toUpperCase() || null,
     displayName: item.display_name,
+    zip: addr.postcode || null,
   };
 
   cache.set(key, result);

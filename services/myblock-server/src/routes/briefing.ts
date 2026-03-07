@@ -6,6 +6,8 @@ import { queryPermitsByRadius, computePermitStats } from '../services/permits.js
 import { resolveToSdpd } from '../services/neighborhoodMap.js';
 import { lookupDistrict } from '../services/councilDistricts.js';
 import { nearestLibraries, nearestFireStations } from '../services/civicPoints.js';
+import { queryFireIncidentsByZip } from '../services/fireIncidents.js';
+import { getDistrictBudget } from '../services/councilBudget.js';
 
 export const briefingRouter = Router();
 
@@ -32,6 +34,7 @@ briefingRouter.post('/briefing', async (req, res) => {
     let lng = parsed.data.lng;
     let neighborhood: string | null = null;
     let displayName = address;
+    let zip: string | null = null;
 
     if (lat && lng) {
       // Use provided coordinates
@@ -41,6 +44,7 @@ briefingRouter.post('/briefing', async (req, res) => {
       lng = geo.lng;
       neighborhood = geo.neighborhood;
       displayName = geo.displayName;
+      zip = geo.zip;
     }
 
     const sdpdNeighborhood = resolveToSdpd(neighborhood);
@@ -57,6 +61,12 @@ briefingRouter.post('/briefing', async (req, res) => {
     const libraries = nearestLibraries(lat!, lng!, 3);
     const fireStationsNearby = nearestFireStations(lat!, lng!, 3);
 
+    // Fire/EMS incidents by zip
+    const fireIncidents = zip ? queryFireIncidentsByZip(zip) : null;
+
+    // Council budget
+    const budget = councilDistrict ? getDistrictBudget(councilDistrict.district) : null;
+
     res.json({
       location: {
         display: displayName,
@@ -64,7 +74,10 @@ briefingRouter.post('/briefing', async (req, res) => {
         lng,
         neighborhood: neighborhood || null,
         sdpdNeighborhood: sdpdNeighborhood || null,
-        councilDistrict: councilDistrict || null,
+        zip: zip || null,
+        councilDistrict: councilDistrict
+          ? { ...councilDistrict, budget: budget || undefined }
+          : null,
       },
       datasets: {
         getItDone311: {
@@ -80,6 +93,7 @@ briefingRouter.post('/briefing', async (req, res) => {
         libraries,
         fireStations: fireStationsNearby,
       },
+      fireIncidents: fireIncidents || undefined,
       lastUpdated: new Date().toISOString(),
     });
   } catch (err: any) {

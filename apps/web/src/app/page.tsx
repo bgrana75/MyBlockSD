@@ -17,10 +17,15 @@ interface BriefingData {
     lng: number;
     neighborhood: string;
     sdpdNeighborhood: string | null;
+    zip: string | null;
     councilDistrict: {
       district: number;
       member: string;
       title: string;
+      budget?: {
+        totalBudget: number;
+        fiscalYear: number;
+      };
     } | null;
   };
   datasets: {
@@ -37,40 +42,14 @@ interface BriefingData {
     libraries: any[];
     fireStations: any[];
   };
+  fireIncidents?: {
+    total: number;
+    byCategory: { name: string; count: number }[];
+    recent: any[];
+  };
 }
 
 type TabId = 'briefing' | 'rightnow' | 'ask';
-
-const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
-  {
-    id: 'briefing',
-    label: 'Briefing',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-        <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
-      </svg>
-    ),
-  },
-  {
-    id: 'rightnow',
-    label: 'Live',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-        <path fillRule="evenodd" d="M5.05 3.636a1 1 0 010 1.414 7 7 0 000 9.9 1 1 0 11-1.414 1.414 9 9 0 010-12.728 1 1 0 011.414 0zm9.9 0a1 1 0 011.414 0 9 9 0 010 12.728 1 1 0 11-1.414-1.414 7 7 0 000-9.9 1 1 0 010-1.414zM7.879 6.464a1 1 0 010 1.414 3 3 0 000 4.243 1 1 0 11-1.415 1.414 5 5 0 010-7.07 1 1 0 011.415 0zm4.242 0a1 1 0 011.415 0 5 5 0 010 7.072 1 1 0 01-1.415-1.415 3 3 0 000-4.242 1 1 0 010-1.415zM10 9a1 1 0 011 1v.01a1 1 0 11-2 0V10a1 1 0 011-1z" clipRule="evenodd" />
-      </svg>
-    ),
-  },
-  {
-    id: 'ask',
-    label: 'Ask AI',
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-        <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zm-4 0H9v2h2V9z" clipRule="evenodd" />
-      </svg>
-    ),
-  },
-];
 
 export default function Home() {
   const [briefing, setBriefing] = useState<BriefingData | null>(null);
@@ -104,17 +83,30 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-surface border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 py-2.5 flex flex-col sm:flex-row items-center gap-3">
-          <h1 className="text-base font-bold text-foreground shrink-0">My Block SD</h1>
+      <header className="border-b border-border bg-surface/80 backdrop-blur-md sticky top-0 z-10">
+        <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-3 flex flex-col sm:flex-row items-center gap-3">
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4.5 w-4.5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <h1 className="text-base font-bold gradient-text">My Block SD</h1>
+          </div>
           <AddressSearch onSearch={handleSearch} isLoading={loading} />
+          {loc && (
+            <div className="hidden sm:flex items-center gap-2 text-xs text-muted shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-success pulse-dot" />
+              <span>{loc.neighborhood}</span>
+            </div>
+          )}
         </div>
       </header>
 
       {/* Error */}
       {error && (
-        <div className="max-w-7xl mx-auto px-4 mt-4">
-          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+        <div className="max-w-[1400px] mx-auto px-4 lg:px-6 mt-4">
+          <div className="bg-danger/10 border border-danger/20 text-danger px-4 py-3 rounded-xl text-sm flex items-center gap-2 animate-fade-in">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
@@ -126,70 +118,144 @@ export default function Home() {
       {/* Landing state */}
       {!briefing && !loading && (
         <div className="flex items-center justify-center" style={{ height: 'calc(100vh - 64px)' }}>
-          <div className="text-center max-w-sm px-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-primary/10 to-accent/10 rounded-2xl flex items-center justify-center mx-auto mb-5">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-primary" viewBox="0 0 20 20" fill="currentColor">
+          <div className="text-center max-w-md px-4 animate-fade-in">
+            <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl flex items-center justify-center mx-auto mb-6 glow-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary-light" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-foreground mb-2">Know Your Block SD</h2>
-            <p className="text-muted text-sm leading-relaxed">
+            <h2 className="text-3xl font-bold gradient-text mb-3">Know Your Block</h2>
+            <p className="text-muted text-sm leading-relaxed mb-8">
               Enter any San Diego address to see 311 reports, development permits,
-              and live police dispatch — all in one place.
+              fire incidents, council district info, and live police dispatch.
             </p>
-            <div className="flex items-center justify-center gap-4 mt-6 text-[11px] text-muted/60">
-              <span>City of San Diego Open Data</span>
-              <span>·</span>
-              <span>SDPD Online</span>
+            <div className="grid grid-cols-4 gap-3">
+              {[
+                { label: '311 Reports', icon: '📋', color: 'from-primary/20 to-primary/5' },
+                { label: 'Permits', icon: '🏗️', color: 'from-success/20 to-success/5' },
+                { label: 'Fire/EMS', icon: '🚒', color: 'from-danger/20 to-danger/5' },
+                { label: 'Live PD', icon: '🔴', color: 'from-warning/20 to-warning/5' },
+              ].map((item) => (
+                <div key={item.label} className={`bg-gradient-to-b ${item.color} rounded-xl p-3 border border-border`}>
+                  <div className="text-xl mb-1">{item.icon}</div>
+                  <div className="text-[10px] text-muted font-medium">{item.label}</div>
+                </div>
+              ))}
             </div>
+            <p className="text-[11px] text-muted/40 mt-8">
+              Powered by City of San Diego Open Data + SDPD Online
+            </p>
           </div>
         </div>
       )}
 
-      {/* Main content */}
-      {(briefing || loading) && (
-        <div className="max-w-7xl mx-auto px-4 py-3">
+      {/* Loading shimmer */}
+      {loading && !briefing && (
+        <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="h-24 rounded-xl shimmer" />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            <div className="lg:col-span-2 h-[400px] rounded-xl shimmer" />
+            <div className="h-[400px] rounded-xl shimmer" />
+          </div>
+        </div>
+      )}
+
+      {/* Main dashboard */}
+      {briefing && (
+        <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-4 space-y-4">
+          {/* Location bar */}
           {loc && (
-            <div className="mb-2 flex items-baseline gap-2">
-              <h2 className="text-sm font-semibold text-foreground">{loc.neighborhood}</h2>
-              <p className="text-xs text-muted">{loc.display}</p>
+            <div className="flex items-center justify-between animate-fade-in">
+              <div className="flex items-center gap-3">
+                <h2 className="text-lg font-bold text-foreground">{loc.neighborhood}</h2>
+                <span className="text-xs text-muted hidden sm:inline">{loc.display?.split(',').slice(0, 2).join(',')}</span>
+              </div>
+              {loc.zip && (
+                <span className="text-xs text-muted bg-surface-alt px-2.5 py-1 rounded-lg border border-border font-mono">{loc.zip}</span>
+              )}
             </div>
           )}
 
+          {/* Stats ribbon */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <StatCard
+              label="311 Reports"
+              value={briefing.datasets.getItDone311.stats?.total || 0}
+              icon="📋"
+              color="primary"
+              subtext={`${briefing.datasets.getItDone311.stats?.open || 0} open`}
+              delay={0}
+            />
+            <StatCard
+              label="Permits"
+              value={briefing.datasets.permits.stats?.total || 0}
+              icon="🏗️"
+              color="success"
+              subtext={`${briefing.datasets.permits.stats?.byType?.[0]?.name || 'Active'}`}
+              delay={1}
+            />
+            <StatCard
+              label="Fire/EMS"
+              value={briefing.fireIncidents?.total || 0}
+              icon="🚒"
+              color="danger"
+              subtext={`YTD in ${loc?.zip || 'area'}`}
+              delay={2}
+            />
+            <StatCard
+              label="District Budget"
+              value={loc?.councilDistrict?.budget?.totalBudget || 0}
+              icon="💰"
+              color="warning"
+              isCurrency
+              subtext={loc?.councilDistrict ? `District ${loc.councilDistrict.district} · FY${loc.councilDistrict.budget?.fiscalYear || ''}` : 'N/A'}
+              delay={3}
+            />
+          </div>
+
+          {/* Main grid: Map + Tabs */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
             {/* Map */}
-            <div className="lg:col-span-3 h-[350px] lg:h-[500px] rounded-xl overflow-hidden border border-border shadow-sm">
+            <div className="lg:col-span-3 h-[350px] lg:h-[480px] rounded-xl overflow-hidden border border-border bg-surface animate-fade-in stagger-4">
               <Map
                 center={center}
                 radiusMiles={0.5}
-                items311={briefing?.datasets.getItDone311.items || []}
-                permits={briefing?.datasets.permits.items || []}
-                civic={briefing?.civic || null}
+                items311={briefing.datasets.getItDone311.items || []}
+                permits={briefing.datasets.permits.items || []}
+                civic={briefing.civic || null}
                 activeTab={activeTab}
               />
             </div>
 
-            {/* Side panel */}
-            <div className="lg:col-span-2 flex flex-col bg-surface rounded-xl border border-border shadow-sm overflow-hidden min-h-[600px] lg:min-h-[700px]">
-              {/* Tabs */}
-              <div className="flex border-b border-border bg-surface">
-                {TABS.map((tab) => (
+            {/* Side panel with tabs */}
+            <div className="lg:col-span-2 flex flex-col bg-surface rounded-xl border border-border overflow-hidden min-h-[480px] animate-fade-in stagger-5">
+              {/* Tab bar */}
+              <div className="flex border-b border-border">
+                {([
+                  { id: 'briefing' as TabId, label: 'Overview', icon: '📊' },
+                  { id: 'rightnow' as TabId, label: 'Live', icon: '🔴' },
+                  { id: 'ask' as TabId, label: 'Ask AI', icon: '✨' },
+                ] as const).map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-all relative ${
+                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-3 text-xs font-medium transition-all relative ${
                       activeTab === tab.id
-                        ? 'text-primary'
-                        : 'text-muted hover:text-foreground'
+                        ? 'text-foreground'
+                        : 'text-muted hover:text-foreground/70'
                     }`}
                   >
-                    {tab.icon}
+                    <span className="text-sm">{tab.icon}</span>
                     {tab.label}
                     {tab.id === 'rightnow' && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 pulse-dot" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-success pulse-dot" />
                     )}
                     {activeTab === tab.id && (
-                      <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary rounded-full" />
+                      <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-gradient-to-r from-primary to-accent rounded-full" />
                     )}
                   </button>
                 ))}
@@ -200,54 +266,102 @@ export default function Home() {
                 {loading ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="text-center">
-                      <div className="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-3" />
-                      <p className="text-xs text-muted">Loading neighborhood data...</p>
+                      <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-3" />
+                      <p className="text-xs text-muted">Loading...</p>
                     </div>
                   </div>
                 ) : (
                   <>
                     <div className={activeTab === 'briefing' ? 'h-full' : 'hidden'}>
-                      {briefing && (
-                        <BriefingTab
-                          stats311={briefing.datasets.getItDone311.stats}
-                          permitStats={briefing.datasets.permits.stats}
-                          items311={briefing.datasets.getItDone311.items}
-                          permits={briefing.datasets.permits.items}
-                          neighborhood={loc?.neighborhood || ''}
-                          councilDistrict={loc?.councilDistrict || null}
-                          civic={briefing.civic || null}
-                        />
-                      )}
+                      <BriefingTab
+                        stats311={briefing.datasets.getItDone311.stats}
+                        permitStats={briefing.datasets.permits.stats}
+                        items311={briefing.datasets.getItDone311.items}
+                        permits={briefing.datasets.permits.items}
+                        neighborhood={loc?.neighborhood || ''}
+                        councilDistrict={loc?.councilDistrict || null}
+                        civic={briefing.civic || null}
+                        fireIncidents={briefing.fireIncidents || null}
+                      />
                     </div>
                     <div className={activeTab === 'rightnow' ? 'h-full' : 'hidden'}>
-                      {briefing && (
-                        <RightNowTab
-                          neighborhood={loc?.neighborhood || ''}
-                          sdpdNeighborhood={loc?.sdpdNeighborhood || null}
-                        />
-                      )}
+                      <RightNowTab
+                        neighborhood={loc?.neighborhood || ''}
+                        sdpdNeighborhood={loc?.sdpdNeighborhood || null}
+                      />
                     </div>
                     <div className={activeTab === 'ask' ? 'h-full' : 'hidden'}>
-                      {briefing && (
-                        <ChatPanel
-                          locationContext={loc ? {
-                            address: searchedAddress,
-                            lat: loc.lat,
-                            lng: loc.lng,
-                            neighborhood: loc.neighborhood,
-                          } : undefined}
-                          agentAvailable={agentAvailable}
-                        />
-                      )}
+                      <ChatPanel
+                        locationContext={loc ? {
+                          address: searchedAddress,
+                          lat: loc.lat,
+                          lng: loc.lng,
+                          neighborhood: loc.neighborhood,
+                        } : undefined}
+                        agentAvailable={agentAvailable}
+                      />
                     </div>
                   </>
                 )}
               </div>
             </div>
           </div>
+
+          {/* Data sources footer */}
+          <div className="flex flex-wrap items-center justify-center gap-3 py-2 text-[10px] text-muted/40 animate-fade-in stagger-6">
+            {['311/Get It Done', 'Development Permits', 'Fire/EMS Incidents', 'SDPD Dispatch', 'Council Districts', 'Operating Budget', 'Libraries', 'Fire Stations'].map((src) => (
+              <span key={src} className="flex items-center gap-1">
+                <span className="w-1 h-1 rounded-full bg-muted/30" />
+                {src}
+              </span>
+            ))}
+          </div>
         </div>
       )}
+    </div>
+  );
+}
 
+function StatCard({ label, value, icon, color, subtext, isCurrency, delay }: {
+  label: string;
+  value: number;
+  icon: string;
+  color: 'primary' | 'success' | 'danger' | 'warning';
+  subtext: string;
+  isCurrency?: boolean;
+  delay: number;
+}) {
+  const colorMap = {
+    primary: 'from-primary/15 to-primary/5 border-primary/20 glow-primary',
+    success: 'from-success/15 to-success/5 border-success/20 glow-success',
+    danger: 'from-danger/15 to-danger/5 border-danger/20 glow-danger',
+    warning: 'from-warning/15 to-warning/5 border-warning/20 glow-warning',
+  };
+  const textColor = {
+    primary: 'text-primary-light',
+    success: 'text-success',
+    danger: 'text-danger',
+    warning: 'text-warning',
+  };
+
+  const formatted = isCurrency
+    ? value >= 1_000_000
+      ? `$${(value / 1_000_000).toFixed(1)}M`
+      : value > 0
+        ? `$${(value / 1000).toFixed(0)}K`
+        : '—'
+    : value.toLocaleString();
+
+  return (
+    <div className={`bg-gradient-to-b ${colorMap[color]} border rounded-xl p-3.5 animate-fade-in stagger-${delay + 1} transition-transform hover:scale-[1.02]`}>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-lg">{icon}</span>
+        <span className="text-[10px] text-muted font-medium uppercase tracking-wider">{label}</span>
+      </div>
+      <div className={`text-2xl font-bold ${textColor[color]} tabular-nums animate-count`}>
+        {formatted}
+      </div>
+      <div className="text-[10px] text-muted mt-0.5 truncate">{subtext}</div>
     </div>
   );
 }

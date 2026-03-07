@@ -58,13 +58,13 @@ export default function Map({ center, radiusMiles, items311, permits, civic, act
     <MapContainer center={center} zoom={15} className="h-full w-full" scrollWheelZoom={true} zoomControl={false}>
       <TileLayer
         attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
       />
       <RecenterMap center={center} />
       <Circle
         center={center}
         radius={radiusMeters}
-        pathOptions={{ color: '#4f46e5', fillColor: '#4f46e5', fillOpacity: 0.04, weight: 1.5, dashArray: '6 4' }}
+        pathOptions={{ color: '#6366f1', fillColor: '#6366f1', fillOpacity: 0.06, weight: 1.5, dashArray: '6 4' }}
       />
 
       {activeTab === 'briefing' && items311.map((item) => (
