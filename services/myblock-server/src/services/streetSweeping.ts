@@ -29,7 +29,31 @@ let segments: SweepingSegment[] = [];
 let byStreet: Map<string, SweepingSegment[]> = new Map();
 
 function normalizeStreet(s: string): string {
-  return s.toUpperCase().replace(/\./g, '').replace(/\s+/g, ' ').trim();
+  let n = s.toUpperCase().replace(/\./g, '').replace(/\s+/g, ' ').trim();
+  // Normalize common suffixes to match city data abbreviations
+  const suffixMap: Record<string, string> = {
+    'AVENUE': 'AV', 'AVE': 'AV',
+    'STREET': 'ST', 'STR': 'ST',
+    'BOULEVARD': 'BL', 'BLVD': 'BL',
+    'DRIVE': 'DR',
+    'ROAD': 'RD',
+    'PLACE': 'PL',
+    'LANE': 'LN',
+    'COURT': 'CT',
+    'CIRCLE': 'CR',
+    'WAY': 'WY',
+    'TERRACE': 'TR',
+    'TRAIL': 'TL',
+    'PARKWAY': 'PY', 'PKWY': 'PY',
+    'HIGHWAY': 'HY', 'HWY': 'HY',
+  };
+  const parts = n.split(' ');
+  const lastWord = parts[parts.length - 1];
+  if (suffixMap[lastWord]) {
+    parts[parts.length - 1] = suffixMap[lastWord];
+    n = parts.join(' ');
+  }
+  return n;
 }
 
 async function downloadCsv(url: string): Promise<Record<string, string>[]> {
@@ -119,13 +143,36 @@ export function lookupSweeping(addressNum: number, streetName: string): Sweeping
     };
   }
 
-  // No exact match — return nearby segments on same street
+  // No exact range match — find nearest segment by address number
+  let closest: SweepingSegment | null = null;
+  let closestDist = Infinity;
+  for (const s of streetSegments) {
+    const midLeft = (s.leftLow + s.leftHigh) / 2;
+    const midRight = (s.rightLow + s.rightHigh) / 2;
+    const dist = Math.min(Math.abs(addressNum - midLeft), Math.abs(addressNum - midRight));
+    if (dist < closestDist) {
+      closestDist = dist;
+      closest = s;
+    }
+  }
+
+  if (closest) {
+    return {
+      found: true,
+      segment: closest,
+      schedule: closest.schedule,
+      isPosted: closest.posted === 'P',
+      nearbySegments: streetSegments.filter(s => s !== closest).slice(0, 3),
+    };
+  }
+
+  // No segments on this street at all
   return {
     found: false,
     segment: null,
-    schedule: streetSegments.length > 0 ? streetSegments[0].schedule : '',
-    isPosted: streetSegments.length > 0 ? streetSegments[0].posted === 'P' : false,
-    nearbySegments: streetSegments.slice(0, 3),
+    schedule: '',
+    isPosted: false,
+    nearbySegments: [],
   };
 }
 
