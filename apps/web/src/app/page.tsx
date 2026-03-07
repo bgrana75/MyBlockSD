@@ -65,15 +65,13 @@ interface BriefingData {
   };
 }
 
-type TabId = 'briefing' | 'rightnow' | 'ask';
-
 export default function Home() {
   const [briefing, setBriefing] = useState<BriefingData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<TabId>('briefing');
   const [agentAvailable, setAgentAvailable] = useState(false);
   const [searchedAddress, setSearchedAddress] = useState('');
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     getStatus().then((s) => setAgentAvailable(s.agentAvailable)).catch(() => {});
@@ -167,16 +165,14 @@ export default function Home() {
 
       {/* Loading shimmer */}
       {loading && !briefing && (
-        <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-4">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-4 space-y-3">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[1,2,3,4].map(i => (
               <div key={i} className="h-24 rounded-xl shimmer" />
             ))}
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-            <div className="lg:col-span-2 h-[400px] rounded-xl shimmer" />
-            <div className="h-[400px] rounded-xl shimmer" />
-          </div>
+          <div className="h-[300px] sm:h-[400px] rounded-xl shimmer" />
+          <div className="h-[300px] rounded-xl shimmer" />
         </div>
       )}
 
@@ -232,106 +228,109 @@ export default function Home() {
             />
           </div>
 
-          {/* Main grid: Map + Tabs */}
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
-            {/* Map */}
-            <div className="lg:col-span-3 h-[350px] lg:h-[480px] rounded-xl overflow-hidden border border-border bg-surface animate-fade-in stagger-4">
-              <Map
-                center={center}
-                radiusMiles={0.5}
-                items311={briefing.datasets.getItDone311.items || []}
-                permits={briefing.datasets.permits.items || []}
-                civic={briefing.civic || null}
-                activeTab={activeTab}
-              />
-            </div>
+          {/* Map */}
+          <div className="h-[300px] sm:h-[400px] rounded-xl overflow-hidden border border-border bg-surface animate-fade-in stagger-4">
+            <Map
+              center={center}
+              radiusMiles={0.5}
+              items311={briefing.datasets.getItDone311.items || []}
+              permits={briefing.datasets.permits.items || []}
+              civic={briefing.civic || null}
+              activeTab="briefing"
+            />
+          </div>
 
-            {/* Side panel with tabs */}
-            <div className="lg:col-span-2 flex flex-col bg-surface rounded-xl border border-border overflow-hidden min-h-[480px] animate-fade-in stagger-5">
-              {/* Tab bar */}
-              <div className="flex border-b border-border">
-                {([
-                  { id: 'briefing' as TabId, label: 'Overview', icon: '📊' },
-                  { id: 'rightnow' as TabId, label: 'Live', icon: '🔴' },
-                  { id: 'ask' as TabId, label: 'Ask AI', icon: '✨' },
-                ] as const).map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-3 text-xs font-medium transition-all relative ${
-                      activeTab === tab.id
-                        ? 'text-foreground'
-                        : 'text-muted hover:text-foreground/70'
-                    }`}
-                  >
-                    <span className="text-sm">{tab.icon}</span>
-                    {tab.label}
-                    {tab.id === 'rightnow' && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-success pulse-dot" />
-                    )}
-                    {activeTab === tab.id && (
-                      <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-gradient-to-r from-primary to-accent rounded-full" />
-                    )}
-                  </button>
-                ))}
-              </div>
+          {/* Overview */}
+          <div className="bg-surface rounded-xl border border-border overflow-hidden animate-fade-in stagger-5">
+            <BriefingTab
+              stats311={briefing.datasets.getItDone311.stats}
+              permitStats={briefing.datasets.permits.stats}
+              items311={briefing.datasets.getItDone311.items}
+              permits={briefing.datasets.permits.items}
+              neighborhood={loc?.neighborhood || ''}
+              councilDistrict={loc?.councilDistrict || null}
+              civic={briefing.civic || null}
+              fireIncidents={briefing.fireIncidents || null}
+              trafficCollisions={briefing.trafficCollisions || null}
+              streetSweeping={briefing.streetSweeping || null}
+            />
+          </div>
 
-              {/* Tab content */}
-              <div className="flex-1 overflow-hidden">
-                {loading ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-3" />
-                      <p className="text-xs text-muted">Loading...</p>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className={activeTab === 'briefing' ? 'h-full' : 'hidden'}>
-                      <BriefingTab
-                        stats311={briefing.datasets.getItDone311.stats}
-                        permitStats={briefing.datasets.permits.stats}
-                        items311={briefing.datasets.getItDone311.items}
-                        permits={briefing.datasets.permits.items}
-                        neighborhood={loc?.neighborhood || ''}
-                        councilDistrict={loc?.councilDistrict || null}
-                        civic={briefing.civic || null}
-                        fireIncidents={briefing.fireIncidents || null}
-                        trafficCollisions={briefing.trafficCollisions || null}
-                        streetSweeping={briefing.streetSweeping || null}
-                      />
-                    </div>
-                    <div className={activeTab === 'rightnow' ? 'h-full' : 'hidden'}>
-                      <RightNowTab
-                        neighborhood={loc?.neighborhood || ''}
-                        sdpdNeighborhood={loc?.sdpdNeighborhood || null}
-                      />
-                    </div>
-                    <div className={activeTab === 'ask' ? 'h-full' : 'hidden'}>
-                      <ChatPanel
-                        locationContext={loc ? {
-                          address: searchedAddress,
-                          lat: loc.lat,
-                          lng: loc.lng,
-                          neighborhood: loc.neighborhood,
-                        } : undefined}
-                        agentAvailable={agentAvailable}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
+          {/* Live SDPD Dispatch */}
+          <div className="bg-surface rounded-xl border border-border overflow-hidden animate-fade-in stagger-6">
+            <RightNowTab
+              neighborhood={loc?.neighborhood || ''}
+              sdpdNeighborhood={loc?.sdpdNeighborhood || null}
+            />
           </div>
 
           {/* Data sources footer */}
-          <div className="flex flex-wrap items-center justify-center gap-3 py-2 text-[10px] text-muted/40 animate-fade-in stagger-6">
+          <div className="flex flex-wrap items-center justify-center gap-3 py-2 text-[10px] text-muted/40 animate-fade-in">
             {['311/Get It Done', 'Development Permits', 'Traffic Collisions', 'Fire/EMS Incidents', 'Street Sweeping', 'SDPD Dispatch', 'Council Districts', 'Budget', 'Libraries', 'Fire Stations', 'Rec Centers'].map((src) => (
               <span key={src} className="flex items-center gap-1">
                 <span className="w-1 h-1 rounded-full bg-muted/30" />
                 {src}
               </span>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Floating AI Chat Button */}
+      {briefing && !chatOpen && (
+        <button
+          onClick={() => setChatOpen(true)}
+          className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-primary to-accent shadow-lg shadow-primary/25 flex items-center justify-center text-white hover:scale-110 active:scale-95 transition-all glow-primary"
+          aria-label="Ask AI about your neighborhood"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zm-4 0H9v2h2V9z" clipRule="evenodd" />
+          </svg>
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-accent rounded-full flex items-center justify-center">
+            <span className="text-[8px] font-bold">AI</span>
+          </span>
+        </button>
+      )}
+
+      {/* AI Chat Modal */}
+      {chatOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setChatOpen(false)} />
+          {/* Panel */}
+          <div className="relative w-full sm:max-w-lg h-[85vh] sm:h-[600px] bg-surface border border-border rounded-t-2xl sm:rounded-2xl flex flex-col overflow-hidden animate-fade-in shadow-2xl shadow-black/50">
+            {/* Chat header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-surface-alt">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                  <span className="text-sm">✨</span>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">Ask AI</h3>
+                  <p className="text-[10px] text-muted">Powered by Claude + MCP Tools</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setChatOpen(false)}
+                className="w-8 h-8 rounded-lg hover:bg-surface flex items-center justify-center text-muted hover:text-foreground transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+            {/* Chat body */}
+            <div className="flex-1 overflow-hidden">
+              <ChatPanel
+                locationContext={loc ? {
+                  address: searchedAddress,
+                  lat: loc.lat,
+                  lng: loc.lng,
+                  neighborhood: loc.neighborhood,
+                } : undefined}
+                agentAvailable={agentAvailable}
+              />
+            </div>
           </div>
         </div>
       )}
