@@ -60,11 +60,11 @@ briefingRouter.post('/briefing', async (req, res) => {
       },
       datasets: {
         getItDone311: {
-          items: items311.slice(0, 500),
+          items: [...items311].sort((a, b) => b.dt.localeCompare(a.dt)).slice(0, 500),
           stats: stats311,
         },
         permits: {
-          items: permitItems.slice(0, 500),
+          items: [...permitItems].sort((a, b) => b.dt.localeCompare(a.dt)).slice(0, 500),
           stats: permitStats,
         },
       },

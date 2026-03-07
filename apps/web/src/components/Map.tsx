@@ -22,7 +22,7 @@ interface Props {
   radiusMiles: number;
   items311: Item[];
   permits: Item[];
-  activeTab: 'briefing' | 'rightnow';
+  activeTab: string;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -36,7 +36,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 function getColor(svc: string) {
-  return CATEGORY_COLORS[svc] || '#6b7280';
+  return CATEGORY_COLORS[svc] || '#94a3b8';
 }
 
 function RecenterMap({ center }: { center: [number, number] }) {
@@ -51,16 +51,16 @@ export default function Map({ center, radiusMiles, items311, permits, activeTab 
   const radiusMeters = radiusMiles * 1609.34;
 
   return (
-    <MapContainer center={center} zoom={15} className="h-full w-full rounded-lg" scrollWheelZoom={true}>
+    <MapContainer center={center} zoom={15} className="h-full w-full" scrollWheelZoom={true} zoomControl={false}>
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
       />
       <RecenterMap center={center} />
       <Circle
         center={center}
         radius={radiusMeters}
-        pathOptions={{ color: '#3b82f6', fillColor: '#3b82f6', fillOpacity: 0.05, weight: 1 }}
+        pathOptions={{ color: '#4f46e5', fillColor: '#4f46e5', fillOpacity: 0.04, weight: 1.5, dashArray: '6 4' }}
       />
 
       {activeTab === 'briefing' && items311.map((item) => (
@@ -71,8 +71,8 @@ export default function Map({ center, radiusMiles, items311, permits, activeTab 
           pathOptions={{ color: getColor(item.svc || ''), fillColor: getColor(item.svc || ''), fillOpacity: 0.7, weight: 1 }}
         >
           <Popup>
-            <div className="text-sm">
-              <strong>{item.svc}</strong>
+            <div className="text-xs leading-relaxed">
+              <strong className="text-sm">{item.svc}</strong>
               <br />Status: {item.st === 'I' ? 'In Process' : 'New'}
               <br />Opened: {item.dt}
               {item.age !== undefined && <><br />{item.age} days old</>}
@@ -89,8 +89,8 @@ export default function Map({ center, radiusMiles, items311, permits, activeTab 
           pathOptions={{ color: '#059669', fillColor: '#059669', fillOpacity: 0.6, weight: 1 }}
         >
           <Popup>
-            <div className="text-sm">
-              <strong>{item.type}</strong>
+            <div className="text-xs leading-relaxed">
+              <strong className="text-sm">{item.type}</strong>
               <br />Status: {item.st}
               <br />Date: {item.dt}
               {item.addr && <><br />{item.addr}</>}

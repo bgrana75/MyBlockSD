@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "My Block — San Diego Neighborhood Intelligence",
+  title: "My Block SD — San Diego Neighborhood Intelligence",
   description: "Know what's happening on your block. 311 reports, permits, live police dispatch — all in one place.",
 };
 

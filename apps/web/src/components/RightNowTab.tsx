@@ -52,61 +52,78 @@ export default function RightNowTab({ neighborhood, sdpdNeighborhood }: Props) {
     : null;
 
   return (
-    <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-320px)] pr-1">
+    <div className="overflow-y-auto h-full p-4 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900">SDPD Dispatch</h3>
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 pulse-dot" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">SDPD Dispatch</h3>
+            <p className="text-[10px] text-muted">{sdpdNeighborhood || neighborhood}</p>
+          </div>
+        </div>
         <div className="flex items-center gap-2">
           {stale && (
-            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">Stale</span>
+            <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">Stale</span>
           )}
           {timeAgo !== null && (
-            <span className="text-xs text-gray-500">Updated {timeAgo}m ago</span>
+            <span className="text-[10px] text-muted">{timeAgo}m ago</span>
           )}
           <button
             onClick={fetchLive}
             disabled={loading}
-            className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
+            className="text-[10px] text-primary hover:text-primary-dark disabled:opacity-50 font-medium transition-colors"
           >
             Refresh
           </button>
         </div>
       </div>
 
-      <p className="text-sm text-gray-500">
-        Active police dispatch calls for {sdpdNeighborhood || neighborhood}.
-        These are reported calls, not confirmed incidents.
+      <p className="text-xs text-muted leading-relaxed">
+        Active police dispatch calls. These are reported calls, not confirmed incidents.
       </p>
 
       {loading && incidents.length === 0 && (
-        <div className="text-center py-8 text-gray-400">Loading dispatch data...</div>
-      )}
-
-      {error && (
-        <div className="text-center py-4 text-red-500 text-sm">{error}</div>
-      )}
-
-      {!loading && !error && incidents.length === 0 && (
-        <div className="text-center py-8 text-gray-400">
-          No active dispatch calls for this area right now.
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-2" />
+            <span className="text-xs text-muted">Loading dispatch data...</span>
+          </div>
         </div>
       )}
 
-      <div className="space-y-2">
+      {error && (
+        <div className="text-center py-4 text-red-500 text-xs bg-red-50 rounded-xl px-3">{error}</div>
+      )}
+
+      {!loading && !error && incidents.length === 0 && (
+        <div className="text-center py-12">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <p className="text-xs text-muted">No active dispatch calls for this area.</p>
+        </div>
+      )}
+
+      <div className="space-y-1.5">
         {incidents.map((inc, i) => (
-          <div key={i} className="bg-gray-50 p-3 rounded-lg">
-            <div className="flex justify-between items-start">
-              <span className="font-medium text-gray-800 text-sm">{inc.callType}</span>
-              <span className="text-xs text-gray-500">{inc.dateTime}</span>
+          <div key={i} className="bg-background rounded-xl px-3 py-2.5">
+            <div className="flex justify-between items-start gap-2">
+              <span className="text-xs font-medium text-foreground">{inc.callType}</span>
+              <span className="text-[10px] text-muted shrink-0 tabular-nums">{inc.dateTime}</span>
             </div>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-[10px] text-muted mt-0.5">
               {inc.division} · {inc.neighborhood}
             </div>
           </div>
         ))}
       </div>
 
-      <p className="text-xs text-gray-400 mt-4">
-        This is informational only — if there&apos;s an emergency, call 911.
+      <p className="text-[10px] text-muted/60 text-center pt-2">
+        Informational only — if there&apos;s an emergency, call 911.
       </p>
     </div>
   );
