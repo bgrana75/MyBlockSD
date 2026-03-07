@@ -485,9 +485,9 @@ function StatCard({ label, value, icon, color, subtext, isCurrency, delay, onDet
         {onDetails && (
           <button
             onClick={onDetails}
-            className="text-[10px] font-medium text-foreground/70 hover:text-foreground bg-white/5 hover:bg-white/10 px-2 py-0.5 rounded transition-colors"
+            className="text-[10px] font-semibold text-foreground bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-md border border-white/10 transition-colors"
           >
-            Details
+            Details ›
           </button>
         )}
       </div>
