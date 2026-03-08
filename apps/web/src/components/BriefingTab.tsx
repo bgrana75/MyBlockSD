@@ -66,7 +66,7 @@ interface Props {
     segment: any;
     nearbySegments: any[];
   } | null;
-  onViewDetails?: (type: 'collisions' | 'fire') => void;
+  onViewDetails?: (type: 'collisions' | 'fire' | '311' | 'permits') => void;
 }
 
 function StatBar({ label, count, max, color = 'from-primary to-accent' }: { label: string; count: number; max: number; color?: string }) {
@@ -244,14 +244,24 @@ export default function BriefingTab({ stats311, permitStats, items311, neighborh
       <section className="animate-fade-in stagger-3">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-[11px] font-medium text-muted uppercase tracking-wider">311 Service Requests</h3>
-          <a
-            href="https://getitdone.sandiego.gov"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[10px] px-2.5 py-1 rounded-lg bg-primary/10 text-primary-light hover:bg-primary/20 font-medium transition-colors"
-          >
-            Report Issue
-          </a>
+          <div className="flex items-center gap-2">
+            {onViewDetails && (
+              <button
+                onClick={() => onViewDetails('311')}
+                className="text-[10px] font-semibold text-foreground bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-md border border-white/10 transition-colors cursor-pointer"
+              >
+                View Details
+              </button>
+            )}
+            <a
+              href="https://getitdone.sandiego.gov"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] px-2.5 py-1 rounded-lg bg-primary/10 text-primary-light hover:bg-primary/20 font-medium transition-colors"
+            >
+              Report Issue
+            </a>
+          </div>
         </div>
         <p className="text-[10px] text-muted/60 mb-2">Currently open requests within 0.5 mi · updated daily from City of San Diego</p>
         {topCats.length > 0 && (
@@ -280,7 +290,17 @@ export default function BriefingTab({ stats311, permitStats, items311, neighborh
       <section className="animate-fade-in stagger-4">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-[11px] font-medium text-muted uppercase tracking-wider">Development Permits</h3>
-          <span className="text-[10px] text-success font-semibold tabular-nums">{permitStats?.total?.toLocaleString() || 0}</span>
+          <div className="flex items-center gap-2">
+            {onViewDetails && (
+              <button
+                onClick={() => onViewDetails('permits')}
+                className="text-[10px] font-semibold text-foreground bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-md border border-white/10 transition-colors cursor-pointer"
+              >
+                View Details
+              </button>
+            )}
+            <span className="text-[10px] text-success font-semibold tabular-nums">{permitStats?.total?.toLocaleString() || 0}</span>
+          </div>
         </div>
         <p className="text-[10px] text-muted/60 mb-2">Active permits within 0.5 mi · since 2024</p>
         {permitTypes.length > 0 && (
@@ -290,28 +310,6 @@ export default function BriefingTab({ stats311, permitStats, items311, neighborh
             ))}
           </div>
         )}
-      </section>
-
-      {/* Recent 311 items */}
-      <section className="animate-fade-in stagger-5">
-        <h3 className="text-[11px] font-medium text-muted uppercase tracking-wider mb-2">Recent Reports</h3>
-        <div className="space-y-1">
-          {[...items311].sort((a, b) => b.dt.localeCompare(a.dt)).slice(0, 10).map((item) => (
-            <div key={item.id} className="bg-surface-alt rounded-lg px-3 py-2 flex items-center justify-between gap-2 border border-border hover:border-primary/20 transition-colors">
-              <div className="min-w-0 flex-1">
-                <span className="text-xs font-medium text-foreground block truncate">{item.svc}</span>
-                <span className="text-[10px] text-muted">
-                  {item.dt} {item.age !== undefined && `· ${item.age}d`}
-                </span>
-              </div>
-              <span className={`text-[9px] px-2 py-0.5 rounded-full font-medium shrink-0 ${
-                item.st === 'I' ? 'bg-warning/15 text-warning' : 'bg-primary/15 text-primary-light'
-              }`}>
-                {item.st === 'I' ? 'In Progress' : 'New'}
-              </span>
-            </div>
-          ))}
-        </div>
       </section>
     </div>
   );

@@ -72,7 +72,7 @@ export default function Home() {
   const [agentAvailable, setAgentAvailable] = useState(false);
   const [searchedAddress, setSearchedAddress] = useState('');
   const [chatOpen, setChatOpen] = useState(false);
-  const [detailModal, setDetailModal] = useState<'collisions' | 'fire' | null>(null);
+  const [detailModal, setDetailModal] = useState<'collisions' | 'fire' | '311' | 'permits' | null>(null);
 
   useEffect(() => {
     getStatus().then((s) => setAgentAvailable(s.agentAvailable)).catch(() => {});
@@ -212,6 +212,7 @@ export default function Home() {
               color="primary"
               subtext={`${briefing.datasets.getItDone311.stats?.open || 0} open`}
               delay={0}
+              onDetails={() => setDetailModal('311')}
             />
             <StatCard
               label="Permits"
@@ -220,6 +221,7 @@ export default function Home() {
               color="success"
               subtext={`${briefing.datasets.permits.stats?.byType?.[0]?.name || 'Active'}`}
               delay={1}
+              onDetails={() => setDetailModal('permits')}
             />
             <StatCard
               label="Collisions"
@@ -298,15 +300,19 @@ export default function Home() {
             {/* Modal header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-surface-alt">
               <div className="flex items-center gap-2.5">
-                <span className="text-lg">{detailModal === 'collisions' ? '🚗' : '🚒'}</span>
+                <span className="text-lg">{detailModal === 'collisions' ? '🚗' : detailModal === 'fire' ? '🚒' : detailModal === '311' ? '📋' : '🏗️'}</span>
                 <div>
                   <h3 className="text-sm font-semibold text-foreground">
-                    {detailModal === 'collisions' ? 'Traffic Collisions (2yr)' : 'Fire/EMS Incidents (YTD)'}
+                    {detailModal === 'collisions' ? 'Traffic Collisions (2yr)' : detailModal === 'fire' ? 'Fire/EMS Incidents (YTD)' : detailModal === '311' ? '311 Service Requests' : 'Development Permits'}
                   </h3>
                   <p className="text-[10px] text-muted">
                     {detailModal === 'collisions'
                       ? `${briefing.trafficCollisions?.total || 0} collisions · ${briefing.trafficCollisions?.totalInjured || 0} injured · ${briefing.trafficCollisions?.totalKilled || 0} fatal · ${briefing.trafficCollisions?.hitAndRun || 0} hit & run`
-                      : `${briefing.fireIncidents?.total || 0} incidents in ${loc?.zip || 'area'}`}
+                      : detailModal === 'fire'
+                      ? `${briefing.fireIncidents?.total || 0} incidents in ${loc?.zip || 'area'}`
+                      : detailModal === '311'
+                      ? `${briefing.datasets.getItDone311.stats?.total || 0} open requests within 0.5 mi`
+                      : `${briefing.datasets.permits.stats?.total || 0} active permits within 0.5 mi`}
                   </p>
                 </div>
               </div>
@@ -371,8 +377,48 @@ export default function Home() {
               )}
 
               {((detailModal === 'collisions' && (!briefing.trafficCollisions?.recent || briefing.trafficCollisions.recent.length === 0)) ||
-                (detailModal === 'fire' && (!briefing.fireIncidents?.recent || briefing.fireIncidents.recent.length === 0))) && (
+                (detailModal === 'fire' && (!briefing.fireIncidents?.recent || briefing.fireIncidents.recent.length === 0)) ||
+                (detailModal === '311' && (!briefing.datasets.getItDone311.items || briefing.datasets.getItDone311.items.length === 0)) ||
+                (detailModal === 'permits' && (!briefing.datasets.permits.items || briefing.datasets.permits.items.length === 0))) && (
                 <div className="text-center text-muted text-sm py-8">No data available</div>
+              )}
+
+              {detailModal === '311' && briefing.datasets.getItDone311.items && (
+                <>
+                  {[...briefing.datasets.getItDone311.items].sort((a: any, b: any) => b.dt.localeCompare(a.dt)).slice(0, 50).map((item: any, i: number) => (
+                    <div key={item.id || i} className="bg-surface-alt rounded-lg border border-border p-3 space-y-0.5">
+                      <div className="flex items-start justify-between">
+                        <span className="text-sm font-medium text-foreground">{item.svc || 'Unknown'}</span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                          item.st === 'I' ? 'bg-warning/15 text-warning' : 'bg-primary/15 text-primary-light'
+                        }`}>
+                          {item.st === 'I' ? 'In Progress' : 'New'}
+                        </span>
+                      </div>
+                      <div className="text-xs text-muted">
+                        {item.dt}{item.age !== undefined && ` · ${item.age} days open`}
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {detailModal === 'permits' && briefing.datasets.permits.items && (
+                <>
+                  {[...briefing.datasets.permits.items].sort((a: any, b: any) => (b.dt || '').localeCompare(a.dt || '')).slice(0, 50).map((item: any, i: number) => (
+                    <div key={item.id || i} className="bg-surface-alt rounded-lg border border-border p-3 space-y-0.5">
+                      <div className="flex items-start justify-between">
+                        <span className="text-sm font-medium text-foreground">{item.ttl || item.type || 'Permit'}</span>
+                        <span className="text-[10px] text-success bg-success/10 px-1.5 py-0.5 rounded font-medium">{item.type || 'Active'}</span>
+                      </div>
+                      <div className="text-xs text-muted">{item.addr || 'No address'}</div>
+                      <div className="flex items-center gap-3 text-[11px] text-muted">
+                        <span>{item.dt}</span>
+                        {item.val && item.val > 0 && <span className="text-success">${item.val.toLocaleString()}</span>}
+                      </div>
+                    </div>
+                  ))}
+                </>
               )}
             </div>
           </div>
