@@ -4,7 +4,7 @@
 
 Built for the **Claude AI Hackathon San Diego**, March 2026.
 
-**Team:** Bryan Grana
+**Team:** Bruno Granatowicz
 
 ## Live Deployment
 
