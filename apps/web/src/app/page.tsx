@@ -480,17 +480,15 @@ function StatCard({ label, value, icon, color, subtext, isCurrency, delay, onDet
       <div className={`text-2xl font-bold ${textColor[color]} tabular-nums animate-count`}>
         {formatted}
       </div>
-      <div className="flex items-center justify-between mt-0.5">
-        <span className="text-[10px] text-muted truncate">{subtext}</span>
-        {onDetails && (
-          <button
-            onClick={onDetails}
-            className="text-[10px] font-semibold text-foreground bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-md border border-white/10 transition-colors"
-          >
-            Details ›
-          </button>
-        )}
-      </div>
+      <div className="text-[10px] text-muted mt-0.5 truncate">{subtext}</div>
+      {onDetails && (
+        <button
+          onClick={onDetails}
+          className="mt-2 w-full text-xs font-semibold py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-foreground border border-white/10 transition-colors cursor-pointer"
+        >
+          View Details
+        </button>
+      )}
     </div>
   );
 }
