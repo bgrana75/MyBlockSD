@@ -274,6 +274,7 @@ export default function Home() {
               fireIncidents={briefing.fireIncidents || null}
               trafficCollisions={briefing.trafficCollisions || null}
               streetSweeping={briefing.streetSweeping || null}
+              onViewDetails={(type) => setDetailModal(type)}
             />
           </div>
 

@@ -66,6 +66,7 @@ interface Props {
     segment: any;
     nearbySegments: any[];
   } | null;
+  onViewDetails?: (type: 'collisions' | 'fire') => void;
 }
 
 function StatBar({ label, count, max, color = 'from-primary to-accent' }: { label: string; count: number; max: number; color?: string }) {
@@ -86,7 +87,7 @@ function StatBar({ label, count, max, color = 'from-primary to-accent' }: { labe
   );
 }
 
-export default function BriefingTab({ stats311, permitStats, items311, neighborhood, councilDistrict, civic, fireIncidents, trafficCollisions, streetSweeping }: Props) {
+export default function BriefingTab({ stats311, permitStats, items311, neighborhood, councilDistrict, civic, fireIncidents, trafficCollisions, streetSweeping, onViewDetails }: Props) {
   const topCats = stats311?.topCategories || [];
   const maxCount = topCats.length > 0 ? topCats[0].count : 1;
 
@@ -180,7 +181,17 @@ export default function BriefingTab({ stats311, permitStats, items311, neighborh
         <section className="animate-fade-in stagger-2">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-[11px] font-medium text-muted uppercase tracking-wider">Traffic Collisions (2yr)</h3>
-            <span className="text-[10px] text-danger font-semibold tabular-nums">{trafficCollisions.total.toLocaleString()}</span>
+            <div className="flex items-center gap-2">
+              {onViewDetails && (
+                <button
+                  onClick={() => onViewDetails('collisions')}
+                  className="text-[10px] font-semibold text-foreground bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-md border border-white/10 transition-colors cursor-pointer"
+                >
+                  View Details
+                </button>
+              )}
+              <span className="text-[10px] text-danger font-semibold tabular-nums">{trafficCollisions.total.toLocaleString()}</span>
+            </div>
           </div>
           <div className="bg-surface-alt rounded-xl p-3 border border-border">
             <div className="grid grid-cols-3 gap-2 mb-3">
@@ -209,7 +220,17 @@ export default function BriefingTab({ stats311, permitStats, items311, neighborh
         <section className="animate-fade-in stagger-2">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-[11px] font-medium text-muted uppercase tracking-wider">Fire/EMS Incidents (YTD)</h3>
-            <span className="text-[10px] text-danger font-semibold tabular-nums">{fireIncidents.total.toLocaleString()}</span>
+            <div className="flex items-center gap-2">
+              {onViewDetails && (
+                <button
+                  onClick={() => onViewDetails('fire')}
+                  className="text-[10px] font-semibold text-foreground bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded-md border border-white/10 transition-colors cursor-pointer"
+                >
+                  View Details
+                </button>
+              )}
+              <span className="text-[10px] text-danger font-semibold tabular-nums">{fireIncidents.total.toLocaleString()}</span>
+            </div>
           </div>
           <div className="bg-surface-alt rounded-xl p-3 border border-border">
             {fireCats.slice(0, 5).map((cat) => (
