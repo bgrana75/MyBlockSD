@@ -23,7 +23,7 @@ San Diego publishes a wealth of open data — 311 service requests, development 
 
 ## What It Does
 
-- **Neighborhood Briefing** — Stats ribbon showing 311 reports, permits, traffic collisions, and fire/EMS calls at a glance. Detailed sections for council district, nearby services, street sweeping schedule, collision breakdown, and recent reports.
+- **Neighborhood Briefing** — Stats ribbon showing 311 reports, permits, traffic collisions, and fire/EMS calls at a glance with drill-down detail modals. Detailed sections for council district, nearby services, street sweeping schedule, and collision breakdown.
 - **Interactive Map** — Leaflet map with color-coded markers for 311 items, permits, libraries, fire stations, and rec centers.
 - **Live SDPD Dispatch** — Real-time police dispatch calls filtered by neighborhood, auto-refreshing every 60 seconds.
 - **AI Chat** — Floating chat modal powered by Claude with MCP tool access to all 11 datasets. Ask questions like "What are the biggest issues on my block?" or "How does this area compare to Hillcrest?"
